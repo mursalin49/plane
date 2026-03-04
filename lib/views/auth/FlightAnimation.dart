@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../healper/route.dart';
 import 'login.dart';
 import '../../utils/app_images.dart';
 
@@ -25,7 +26,7 @@ class _FlightAnimationState extends State<FlightAnimation> with TickerProviderSt
       duration: const Duration(seconds: 15),
     )..repeat(reverse: true);
 
-    // Navigate to CabinAuditScreen after 3 seconds
+    // Navigate to Dashboard after splash
     Future.delayed(const Duration(seconds: 15), () {
       if (mounted) {
         // Get.off(() => CabinAuditScreen());
