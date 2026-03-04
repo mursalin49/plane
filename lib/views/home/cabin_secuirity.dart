@@ -43,7 +43,7 @@ class CabinAuditScreenS extends StatelessWidget {
                   _buildTextField("Shara Brown"),
 
                   _buildLabel("Gate*"),
-                  _buildDropdown(["Please Select One", "Gate A1", "Gate B2"]),
+                  _buildDropdown(["Please Select One", "Gate A1", "Gate B2", ]),
 
                   const SizedBox(height: 20),
                   const Divider(),
@@ -62,7 +62,7 @@ class CabinAuditScreenS extends StatelessWidget {
                   const SizedBox(height: 20),
 
 
-                  _buildPassFailSection("Front Galley*"),
+                  _buildPassFailSection("Front Galley*",),
                   const SizedBox(height: 20),
 
                   _buildPassFailSection("Comfort*"),
@@ -159,9 +159,9 @@ class CabinAuditScreenS extends StatelessWidget {
         _buildLabel(title),
         Row(
           children: [
-            Expanded(child: OutlinedButton.icon(onPressed: (){}, icon: Icon(Icons.check, size: 16), label: AppText("Pass"), style: OutlinedButton.styleFrom(foregroundColor: Colors.black))),
+            Expanded(child: OutlinedButton.icon(onPressed: (){}, icon: Icon(Icons.check, size: 16), label: AppText("Pass"), style: OutlinedButton.styleFrom(foregroundColor: AppColors.grey))),
             const SizedBox(width: 10),
-            Expanded(child: OutlinedButton.icon(onPressed: (){}, icon: Icon(Icons.close, size: 16), label: AppText("Fail"), style: OutlinedButton.styleFrom(foregroundColor: Colors.black))),
+            Expanded(child: OutlinedButton.icon(onPressed: (){}, icon: Icon(Icons.close, size: 16), label: AppText("Fail"), style: OutlinedButton.styleFrom(foregroundColor: AppColors.grey ))),
           ],
         ),
         const SizedBox(height: 8),
@@ -335,10 +335,39 @@ class CabinAuditScreenS extends StatelessWidget {
 
   Widget _buildDropdown(List<String> items) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 12),
-    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(10)),
-    child: DropdownButtonHideUnderline(child: Obx(() => DropdownButton<String>(
-      value: controller.selectedGate.value, isExpanded: true, items: items.map((e) => DropdownMenuItem(value: e, child: AppText(e))).toList(), onChanged: (v) => controller.selectedGate.value = v!,
-    ))),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey.shade300),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: DropdownButtonHideUnderline(
+      child: Obx(
+            () => DropdownButton<String>(
+          value: controller.selectedGate.value,
+          isExpanded: true,
+
+          // 🔹 Selected text color
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 16,
+            fontWeight: FontWeight.w500
+          ),
+
+          items: items.map((e) {
+            return DropdownMenuItem<String>(
+              value: e,
+              child: Text(
+                e,
+                style: const TextStyle(
+                  color: Colors.grey, // 🔹 Dropdown list text color
+                ),
+              ),
+            );
+          }).toList(),
+
+          onChanged: (v) => controller.selectedGate.value = v!,
+        ),
+      ),
+    ),
   );
 
   Widget _buildLargeTextField(String h) => TextField(maxLines: 3, decoration: InputDecoration(hintText: h, border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))));

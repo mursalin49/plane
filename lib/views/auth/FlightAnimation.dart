@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../CabinAudit.dart';
+import 'login.dart';
 import '../../utils/app_images.dart';
 
 class FlightAnimation extends StatefulWidget {
@@ -28,7 +28,8 @@ class _FlightAnimationState extends State<FlightAnimation> with TickerProviderSt
     // Navigate to CabinAuditScreen after 3 seconds
     Future.delayed(const Duration(seconds: 15), () {
       if (mounted) {
-        Get.off(() => CabinAuditScreen());
+        // Get.off(() => CabinAuditScreen());
+        Get.off(() => LoginScreen());
       }
     });
   }
