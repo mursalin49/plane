@@ -3,37 +3,41 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:io';
 
-
+import '../../utils/app_colors.dart';
+import '../../utils/app_icons.dart';
+import '../../utils/app_images.dart';
+import '../../utils/app_text.dart';
 class CabinAuditScreenS extends StatelessWidget {
-  final controller = Get.put(CabinController()); // আপনার কন্ট্রোলার নাম অনুযায়ী চেক করুন
+  final controller = Get.put(CabinController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2E6FD1),
-        title: const Text("Cabin Security Search Training",
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-        leading: const Icon(Icons.arrow_back, color: Colors.white),
+        backgroundColor: AppColors.mainAppColor,
+        title: AppText("Cabin Security Search Training", color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
         actions: const [Icon(Icons.more_vert, color: Colors.white), SizedBox(width: 10)],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ১. ইনস্ট্রাকশন বক্স
+
             _buildInstructionBox(),
 
-// ২. ইনস্ট্রাকশন ইমেজ (আপনার ইমেজে যেমন আছে)
-            Image.asset('assets/images/cabin.png', fit: BoxFit.cover),
+            Image.asset(AppImages.cabin, fit: BoxFit.cover),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- উপরের ইনফরমেশন পার্ট (ইমেজ অনুযায়ী) ---
+
                   _buildLabel("Date and Time*"),
-                  _buildTextField("10/16/2026 18:35"), // আপনি চাইলে বর্তমান সময় দেখাতে পারেন
+                  _buildTextField("10/16/2026 18:35"),
 
                   _buildLabel("Supervisor/Lead*"),
                   _buildTextField("Shara Brown"),
@@ -43,8 +47,7 @@ class CabinAuditScreenS extends StatelessWidget {
 
                   const SizedBox(height: 20),
                   const Divider(),
-                  const Text("Inspection Checklist",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1A237E))),
+                  AppText("Inspection Checklist", fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.heading),
                   const SizedBox(height: 10),
 
                   _buildLabel("Type Of Aircraft"),
@@ -54,12 +57,11 @@ class CabinAuditScreenS extends StatelessWidget {
 
 
 
-                  // সিট ম্যাপ এরিয়া (১ থেকে ৪৯ সারি)
                   _buildSeatMapSection(),
 
                   const SizedBox(height: 20),
 
-                  // --- গ্যালারি এবং ম্যাপ সেকশন ---
+
                   _buildPassFailSection("Front Galley*"),
                   const SizedBox(height: 20),
 
@@ -88,7 +90,7 @@ class CabinAuditScreenS extends StatelessWidget {
     );
   }
 
-  // --- ইন্টারঅ্যাক্টিভ সিট ম্যাপ (১-৬, ১৪-৪০, ৪১-৪৯) ---
+
   Widget _buildSeatMapSection() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -123,7 +125,7 @@ class CabinAuditScreenS extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             for (var s in cols.sublist(0, (cols.length / 2).floor())) _seatItem("$row$s", color),
-            SizedBox(width: 30, child: Center(child: Text("$row", style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)))),
+            SizedBox(width: 30, child: Center(child: AppText("$row", fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold))),
             for (var s in cols.sublist((cols.length / 2).floor())) _seatItem("$row$s", color),
           ],
         );
@@ -143,13 +145,13 @@ class CabinAuditScreenS extends StatelessWidget {
             color: isDone ? (status == "Pass" ? Colors.green : Colors.red) : baseColor,
             borderRadius: BorderRadius.circular(4),
           ),
-          child: Center(child: Text(id, style: const TextStyle(color: Colors.white, fontSize: 8))),
+          child: Center(child: AppText(id, color: Colors.white, fontSize: 8)),
         ),
       );
     });
   }
 
-  // --- গ্যালারি/এলএভি এর জন্য পাস-ফেইল উইজেট ---
+
   Widget _buildPassFailSection(String title) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,9 +159,9 @@ class CabinAuditScreenS extends StatelessWidget {
         _buildLabel(title),
         Row(
           children: [
-            Expanded(child: OutlinedButton.icon(onPressed: (){}, icon: Icon(Icons.check, size: 16), label: Text("Pass"), style: OutlinedButton.styleFrom(foregroundColor: Colors.black))),
+            Expanded(child: OutlinedButton.icon(onPressed: (){}, icon: Icon(Icons.check, size: 16), label: AppText("Pass"), style: OutlinedButton.styleFrom(foregroundColor: Colors.black))),
             const SizedBox(width: 10),
-            Expanded(child: OutlinedButton.icon(onPressed: (){}, icon: Icon(Icons.close, size: 16), label: Text("Fail"), style: OutlinedButton.styleFrom(foregroundColor: Colors.black))),
+            Expanded(child: OutlinedButton.icon(onPressed: (){}, icon: Icon(Icons.close, size: 16), label: AppText("Fail"), style: OutlinedButton.styleFrom(foregroundColor: Colors.black))),
           ],
         ),
         const SizedBox(height: 8),
@@ -168,7 +170,7 @@ class CabinAuditScreenS extends StatelessWidget {
     );
   }
 
-  // --- সাবমিশন ফর্ম (Bottom Sheet) ---
+
   void _openAuditForm(String seatId) {
     String status = "Pass";
     String? imgPath;
@@ -182,7 +184,7 @@ class CabinAuditScreenS extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Audit Seat: $seatId", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              AppText("Audit Seat: $seatId", fontSize: 18, fontWeight: FontWeight.bold),
               const Divider(),
               const SizedBox(height: 10),
               StatefulBuilder(builder: (context, setState) {
@@ -207,8 +209,8 @@ class CabinAuditScreenS extends StatelessWidget {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => controller.saveSeatAudit(seatId, status, imgPath, noteCtrl.text),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E6FD1), minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                child: const Text("SAVE DATA", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.mainAppColor, minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                child: AppText("SAVE DATA", color: Colors.white),
               )
             ],
           ),
@@ -218,8 +220,8 @@ class CabinAuditScreenS extends StatelessWidget {
     );
   }
 
-  // --- ছোট UI হেল্পারস ---
-  Widget _buildLabel(String t) => Padding(padding: const EdgeInsets.only(top: 15, bottom: 8), child: Text(t, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)));
+
+  Widget _buildLabel(String t) => Padding(padding: const EdgeInsets.only(top: 15, bottom: 8), child: AppText(t, fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87));
 
   Widget _buildTextField(String hint) => TextField(decoration: InputDecoration(hintText: hint, contentPadding: EdgeInsets.symmetric(horizontal: 12), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))));
 
@@ -229,11 +231,11 @@ class CabinAuditScreenS extends StatelessWidget {
     height: 60, width: double.infinity,
     decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid), borderRadius: BorderRadius.circular(10), color: Colors.grey.shade50),
     child: imagePath == null
-        ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.cloud_upload_outlined, color: Colors.grey), SizedBox(width: 8), Text("Upload an image", style: TextStyle(color: Colors.grey))])
+        ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.cloud_upload_outlined, color: Colors.grey), SizedBox(width: 8), AppText("Upload an image", color: Colors.grey)])
         : ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.file(File(imagePath), fit: BoxFit.cover)),
   );
 
-  Widget _buildSectionHeader(String title) => Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(title.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueGrey, letterSpacing: 1.2)));
+  Widget _buildSectionHeader(String title) => Padding(padding: const EdgeInsets.only(bottom: 10), child: AppText(title.toUpperCase(), fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueGrey));
 
   Widget _buildInstructionBox() {
     return Container(
@@ -243,48 +245,46 @@ class CabinAuditScreenS extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // হেডার সেকশন
+
           Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(4),
-                // BoxType.circle এর বদলে BoxShape.circle হবে
+
                 decoration: const BoxDecoration(
-                  color: Color(0xFF2E6FD1),
+                  color: AppColors.mainAppColor,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.info_outline, color: Colors.white, size: 14),
               ),
               const SizedBox(width: 10),
-              const Text(
+              AppText(
                 "Instructions",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.black
-                ),
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.black
               ),
             ],
           ),
           const SizedBox(height: 12),
-          // মূল ইনস্ট্রাকশন টেক্সট
-          const Text(
+
+          AppText(
             "Hide Test objects and take pictures of where you hide them and then have the team search. Go back and mark the one they did not find.",
-            style: TextStyle(fontSize: 13, color: Colors.black87, height: 1.4),
+            fontSize: 13, color: AppColors.grey,
           ),
           const SizedBox(height: 10),
-          const Text(
+          AppText(
             "The goal is to find common areas of failure so we can focus on those areas for a TSA Audit.",
-            style: TextStyle(fontSize: 13, color: Colors.black87),
+            fontSize: 13, color: AppColors.grey,
           ),
           const SizedBox(height: 10),
-          const Text("• Do not tell agents how many objects were hidden",
-              style: TextStyle(fontSize: 13, color: Colors.black54)),
-          const Text("• Only tell them where the object are after the team says they have completed the search fully",
-              style: TextStyle(fontSize: 13, color: Colors.black54)),
+          AppText("• Do not tell agents how many objects were hidden",
+              fontSize: 13, color: AppColors.grey),
+          AppText("• Only tell them where the object are after the team says they have completed the search fully",
+              fontSize: 13, color: AppColors.grey),
 
           const SizedBox(height: 12),
-          // বুলেট পয়েন্ট (নীল রঙের ডট সহ)
+
           _buildBulletPoint("Conduct Audits Proactive and Submit them as you do them;"),
           _buildBulletPoint("Do not wait until the End of the Shift to complete them."),
         ],
@@ -300,17 +300,15 @@ class CabinAuditScreenS extends StatelessWidget {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 6),
-            child: Icon(Icons.circle, size: 6, color: Color(0xFF2E6FD1)),
+            child: Icon(Icons.circle, size: 6, color: AppColors.mainAppColor),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
+            child: AppText(
               text,
-              style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF2E6FD1),
-                  fontWeight: FontWeight.w500
-              ),
+              fontSize: 13,
+              color: AppColors.mainAppColor,
+              fontWeight: FontWeight.w500
             ),
           ),
         ],
@@ -339,20 +337,20 @@ class CabinAuditScreenS extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 12),
     decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(10)),
     child: DropdownButtonHideUnderline(child: Obx(() => DropdownButton<String>(
-      value: controller.selectedGate.value, isExpanded: true, items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => controller.selectedGate.value = v!,
+      value: controller.selectedGate.value, isExpanded: true, items: items.map((e) => DropdownMenuItem(value: e, child: AppText(e))).toList(), onChanged: (v) => controller.selectedGate.value = v!,
     ))),
   );
 
   Widget _buildLargeTextField(String h) => TextField(maxLines: 3, decoration: InputDecoration(hintText: h, border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))));
 
-  Widget _buildSignaturePlaceholder() => Container(height: 60, width: double.infinity, decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(10)), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.edit, size: 16, color: Colors.grey), SizedBox(width: 8), Text("Click to sign here", style: TextStyle(color: Colors.grey))]));
+  Widget _buildSignaturePlaceholder() => Container(height: 60, width: double.infinity, decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(10)), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.edit, size: 16, color: Colors.grey), SizedBox(width: 8), AppText("Click to sign here", color: Colors.grey)]));
 
-  Widget _statusBtn(String l, Color c, VoidCallback o) => ElevatedButton(onPressed: o, style: ElevatedButton.styleFrom(backgroundColor: c, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text(l, style: const TextStyle(color: Colors.white)));
+  Widget _statusBtn(String l, Color c, VoidCallback o) => ElevatedButton(onPressed: o, style: ElevatedButton.styleFrom(backgroundColor: c, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: AppText(l, color: Colors.white));
 
   Widget _buildSubmitButton() => ElevatedButton.icon(
     onPressed: () {},
     icon: const Icon(Icons.send, color: Colors.white, size: 18),
-    label: const Text("SEND AUDIT REPORT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E6FD1), minimumSize: const Size(double.infinity, 55), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+    label: AppText("SEND AUDIT REPORT", color: Colors.white, fontWeight: FontWeight.bold),
+    style: ElevatedButton.styleFrom(backgroundColor: AppColors.mainAppColor, minimumSize: const Size(double.infinity, 55), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
   );
 }

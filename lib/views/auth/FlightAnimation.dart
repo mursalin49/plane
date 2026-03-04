@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../CabinAudit.dart';
+import '../../utils/app_images.dart';
 
 class FlightAnimation extends StatefulWidget {
   @override
@@ -16,7 +17,7 @@ class _FlightAnimationState extends State<FlightAnimation> with TickerProviderSt
     super.initState();
     _mainController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 15), // মেঘের গতি
+      duration: const Duration(seconds: 15),
     )..repeat();
 
     _planeFloatController = AnimationController(
@@ -48,30 +49,27 @@ class _FlightAnimationState extends State<FlightAnimation> with TickerProviderSt
         builder: (context, child) {
           return Stack(
             children: [
-              // ১. এই মেঘটি বাম থেকে ডানে যাবে (Left to Right)
+
               _buildCloud(
-                image: 'assets/images/small_cloud.png',
+                image: AppImages.small_cloud,
                 width: 180,
                 speed: 0.5,
-                fromLeft: true, // ডিরেকশন কন্ট্রোল
+                fromLeft: true,
                 top: 150,
               ),
 
-              // ২. প্লেন (আপনার ডিজাইন অনুযায়ী ডান থেকে বাম-উপরে যাচ্ছে)
               _buildMovingPlane(),
 
-              // ৩. এই মেঘটি ডান থেকে বামে যাবে (Right to Left)
               _buildCloud(
-                image: 'assets/images/big_cloud.png',
+                image: AppImages.big_cloud,
                 width: 350,
                 speed: 1.2,
                 fromLeft: true,
                 bottom: 100,
               ),
 
-              // ৪. আরেকটি ছোট মেঘ বাম থেকে ডানে (নিচের দিকে)
               _buildCloud(
-                image: 'assets/images/small_cloud.png',
+                image: AppImages.small_cloud,
                 width: 120,
                 speed: 0.7,
                 fromLeft: true,
@@ -84,7 +82,6 @@ class _FlightAnimationState extends State<FlightAnimation> with TickerProviderSt
     );
   }
 
-  // ডিরেকশন ভিত্তিক মেঘ তৈরির মেথড
   Widget _buildCloud({
     required String image,
     required double width,
@@ -98,10 +95,10 @@ class _FlightAnimationState extends State<FlightAnimation> with TickerProviderSt
 
     double xPos;
     if (fromLeft) {
-      // বাম থেকে ডানে যাওয়ার লজিক
+
       xPos = (progress * (screenWidth + width)) - width;
     } else {
-      // ডান থেকে বামে যাওয়ার লজিক
+
       xPos = screenWidth - (progress * (screenWidth + width));
     }
 
@@ -118,7 +115,7 @@ class _FlightAnimationState extends State<FlightAnimation> with TickerProviderSt
     double screenHeight = MediaQuery.of(context).size.height;
     double progress = _mainController.value;
 
-    // প্লেন ডান থেকে বাম-উপরে যাবে
+
     double xPos = screenWidth - (progress * (screenWidth + 300));
     double yPos = (screenHeight * 0.6) - (progress * (screenHeight * 0.4));
 
@@ -130,7 +127,7 @@ class _FlightAnimationState extends State<FlightAnimation> with TickerProviderSt
         builder: (context, child) {
           return Transform.translate(
             offset: Offset(0, _planeFloatController.value * 15),
-            child: Image.asset('assets/images/plane.png', width: 220),
+            child: Image.asset(AppImages.plane, width: 220),
           );
         },
       ),
