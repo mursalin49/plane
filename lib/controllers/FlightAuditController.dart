@@ -10,6 +10,8 @@ class CabinController extends GetxController {
 
   // ড্রপডাউন এবং অন্যান্য ফিল্ড
   var selectedGate = 'Please Select One'.obs;
+  var selectedSupervisor = 'Please Select One'.obs;
+  var selectedAircraft = 'Please Select One'.obs;
 
   @override
   void onInit() {
@@ -36,5 +38,18 @@ class CabinController extends GetxController {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: ImageSource.camera);
     return image?.path;
+  }
+
+  /// Area key (e.g. "Front Galley") -> picked image file path.
+  final areaImages = <String, String?>{}.obs;
+
+  /// Pick image from gallery for an area (Areas section upload).
+  Future<void> pickImageForArea(String areaKey) async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      areaImages[areaKey] = image.path;
+      areaImages.refresh();
+    }
   }
 }

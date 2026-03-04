@@ -55,6 +55,8 @@ dependencies:
   path_provider: ^2.1.5
   saver_gallery: ^4.1.0
   signature: ^5.5.0
+  motion_tab_bar: ^2.0.4
+  hold_to_confirm_button: ^0.0.1
 
 dev_dependencies:
   flutter_test:
