@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../healper/route.dart';
+import 'login.dart';
 import '../../utils/app_images.dart';
 
 class FlightAnimation extends StatefulWidget {
@@ -28,7 +29,8 @@ class _FlightAnimationState extends State<FlightAnimation> with TickerProviderSt
     // Navigate to Dashboard after splash
     Future.delayed(const Duration(seconds: 15), () {
       if (mounted) {
-        Get.offNamed(RouteHelper.dashboard);
+        // Get.off(() => CabinAuditScreen());
+        Get.off(() => LoginScreen());
       }
     });
   }
