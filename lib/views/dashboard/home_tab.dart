@@ -1,3 +1,4 @@
+import 'package:avislap/views/home/LAVSafety.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
@@ -34,7 +35,8 @@ class HomeTab extends StatelessWidget {
                 _TasksSection(
                   toComplete: tasksToComplete,
                   onCabinAudit: () => Get.to(() => CabinAuditScreen()),
-                  onLavSafety: () => Get.to(() => const LavSafetyScreen()),
+                  // onLavSafety: () => Get.to(() => const LavSafetyScreen()),
+                  onLavSafety: () => Get.to(() =>  LAVSafetyScreen ()),
                   onCabinSecurity: () => Get.to(() => const CabinAuditScreenS()),
                 ),
                 const SizedBox(height: 32),

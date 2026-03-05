@@ -18,16 +18,16 @@ class _FlightAnimationState extends State<FlightAnimation> with TickerProviderSt
     super.initState();
     _mainController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 15),
+      duration: const Duration(seconds: 3),
     )..repeat();
 
     _planeFloatController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 15),
+      duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
 
     // Navigate to Dashboard after splash
-    Future.delayed(const Duration(seconds: 15), () {
+    Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         // Get.off(() => CabinAuditScreen());
         Get.off(() => LoginScreen());

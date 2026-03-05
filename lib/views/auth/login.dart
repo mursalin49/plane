@@ -5,6 +5,7 @@ import 'package:avislap/utils/app_text.dart';
 import 'package:avislap/views/CabinAudit.dart';
 import 'package:avislap/views/auth/comon_widets.dart';
 import 'package:avislap/views/auth/trouble.dart';
+import 'package:avislap/views/dashboard/dashboard_screen.dart';
 import 'package:avislap/views/home/LAVSafety.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -77,7 +78,7 @@ class LoginScreen extends StatelessWidget {
 
             const SizedBox(height: 60),
             buildPrimaryButton("SIGN IN", () {
-              Get.to(()=> CabinAuditScreen());
+              Get.to(()=> DashboardScreen());
               // Get.to(()=>LAVSafetyScreen());
             }),
           ],

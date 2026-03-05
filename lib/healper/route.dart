@@ -1,3 +1,4 @@
+import 'package:avislap/views/home/LAVSafety.dart';
 import 'package:get/get.dart';
 
 import '../views/auth/FlightAnimation.dart';
@@ -10,7 +11,8 @@ class RouteHelper {
   static const String splash = '/';
   static const String dashboard = '/dashboard';
   static const String cabinAudit = '/cabin-audit';
-  static const String lavSafety = '/lav-safety';
+  // static const String lavSafety = '/lav-safety';
+  static const String lavSafety = '/LAVSafety';
   static const String cabinSecurityTraining = '/cabin-security-training';
 
   static List<GetPage> routes = [
@@ -31,7 +33,7 @@ class RouteHelper {
     ),
     GetPage(
       name: lavSafety,
-      page: () => const LavSafetyScreen(),
+      page: () => LAVSafetyScreen(),
       transition: Transition.rightToLeft,
     ),
     GetPage(
