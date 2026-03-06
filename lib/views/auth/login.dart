@@ -6,6 +6,11 @@ import 'package:avislap/views/CabinAudit.dart';
 import 'package:avislap/views/auth/comon_widets.dart';
 import 'package:avislap/views/auth/trouble.dart';
 import 'package:avislap/views/dashboard/dashboard_screen.dart';
+import 'package:avislap/views/extra/CabinSecurityTrainingScreen.dart';
+import 'package:avislap/views/extra/EndOfShiftReportScreen.dart';
+import 'package:avislap/views/extra/LavSafetyObservationScreen.dart';
+import 'package:avislap/views/extra/employee_one_screen.dart';
+import 'package:avislap/views/extra/new_search_bottom_sheet.dart';
 import 'package:avislap/views/home/LAVSafety.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -80,6 +85,11 @@ class LoginScreen extends StatelessWidget {
             buildPrimaryButton("SIGN IN", () {
               Get.to(()=> DashboardScreen());
               // Get.to(()=>LAVSafetyScreen());
+              // Get.to(()=> LavSafetyObservationScreen());
+              // Get.to(() => const CabinSecurityScreen());
+              // Get.to(() => const EndOfShiftReportScreen());
+              // Get.to(() => const NewSearchBottomSheet());
+              // Get.to(() => const EmployeeOneOnOneScreen());
             }),
           ],
         ),

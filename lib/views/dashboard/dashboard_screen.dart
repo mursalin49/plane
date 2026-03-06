@@ -1,3 +1,5 @@
+
+import 'package:avislap/views/inbox/inbox_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:motion_tab_bar/MotionTabBar.dart';
 import 'package:motion_tab_bar/MotionTabBarController.dart';
@@ -46,7 +48,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
           controller: _motionTabBarController,
           children: const [
             HomeTab(),
-            ChatTab(),
+            InboxScreen(),
             HistoryTab(),
             ProfileTab(),
           ],
