@@ -1,10 +1,10 @@
+import 'package:avislap/views/dashboard/app_drawer_widget.dart';
 import 'package:avislap/views/home/LAVSafety.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../CabinAudit.dart';
 import '../home/cabin_secuirity.dart';
-import '../tasks/lav_safety_screen.dart';
 
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
@@ -15,49 +15,72 @@ class HomeTab extends StatelessWidget {
     const completedToday = 0;
     const supervisorName = "John Smith";
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _HeroSection(
-            date: DateTime.now(),
-            toComplete: tasksToComplete,
-            completed: completedToday,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                _SupervisorCard(name: supervisorName),
-                const SizedBox(height: 24),
-                _TasksSection(
-                  toComplete: tasksToComplete,
-                  onCabinAudit: () => Get.to(() => CabinAuditScreen()),
-                  // onLavSafety: () => Get.to(() => const LavSafetyScreen()),
-                  onLavSafety: () => Get.to(() =>  LAVSafetyScreen ()),
-                  onCabinSecurity: () => Get.to(() => const CabinAuditScreenS()),
-                ),
-                const SizedBox(height: 32),
-              ],
+    return Scaffold(
+      backgroundColor: Colors.white,
+      // ✅ Drawer
+      drawer: AppDrawerWidget(
+        appName: 'Parallax',
+        userName: 'Shara Page',
+        userRole: 'General Manager',
+        userImage: 'assets/images/nirob.jpg',
+        onLogout: () {
+          Get.back();
+          // logout logic
+        },
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ✅ Builder wraps HeroSection so Scaffold.of(ctx) works
+            Builder(
+              builder: (ctx) => _HeroSection(
+                date: DateTime.now(),
+                toComplete: tasksToComplete,
+                completed: completedToday,
+                onMenuTap: () => Scaffold.of(ctx).openDrawer(),
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  const _SupervisorCard(name: supervisorName),
+                  const SizedBox(height: 24),
+                  _TasksSection(
+                    toComplete: tasksToComplete,
+                    onCabinAudit: () => Get.to(() => CabinAuditScreen()),
+                    onLavSafety: () => Get.to(() => LAVSafetyScreen()),
+                    onCabinSecurity: () =>
+                        Get.to(() => const CabinAuditScreenS()),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
+// =====================
+// HERO SECTION
+// =====================
 class _HeroSection extends StatelessWidget {
   final DateTime date;
   final int toComplete;
   final int completed;
+  final VoidCallback onMenuTap; // ✅ menu tap callback
 
   const _HeroSection({
     required this.date,
     required this.toComplete,
     required this.completed,
+    required this.onMenuTap,
   });
 
   String _formatDate(DateTime d) {
@@ -92,6 +115,27 @@ class _HeroSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ✅ Top row: menu icon + notification icon
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: onMenuTap,
+                  child: const Icon(
+                    Icons.menu,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+                const Icon(
+                  Icons.notifications_none_outlined,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
             Text(
               "Today",
               style: TextStyle(
@@ -140,7 +184,9 @@ class _HeroSection extends StatelessWidget {
                 value: progress,
                 minHeight: 6,
                 backgroundColor: Colors.white.withValues(alpha: 0.3),
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF86EFAC)),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  Color(0xFF86EFAC),
+                ),
               ),
             ),
           ],
@@ -150,6 +196,9 @@ class _HeroSection extends StatelessWidget {
   }
 }
 
+// =====================
+// SUPERVISOR CARD
+// =====================
 class _SupervisorCard extends StatelessWidget {
   final String name;
 
@@ -171,7 +220,8 @@ class _SupervisorCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundColor: AppColors.mainAppColor.withValues(alpha: 0.2),
+            backgroundColor:
+            AppColors.mainAppColor.withValues(alpha: 0.2),
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : "?",
               style: const TextStyle(
@@ -217,6 +267,9 @@ class _SupervisorCard extends StatelessWidget {
   }
 }
 
+// =====================
+// TASKS SECTION
+// =====================
 class _TasksSection extends StatelessWidget {
   final int toComplete;
   final VoidCallback onCabinAudit;
@@ -250,9 +303,11 @@ class _TasksSection extends StatelessWidget {
             ),
             if (toComplete > 0)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.mainAppColor.withValues(alpha: 0.12),
+                  color:
+                  AppColors.mainAppColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -292,6 +347,9 @@ class _TasksSection extends StatelessWidget {
   }
 }
 
+// =====================
+// PRIMARY TASK CARD
+// =====================
 class _PrimaryTaskCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -337,7 +395,8 @@ class _PrimaryTaskCard extends StatelessWidget {
                   color: AppColors.mainAppColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, size: 28, color: AppColors.mainAppColor),
+                child: Icon(icon,
+                    size: 28, color: AppColors.mainAppColor),
               ),
               const SizedBox(width: 18),
               Expanded(
@@ -365,7 +424,8 @@ class _PrimaryTaskCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: AppColors.mainAppColor,
                   borderRadius: BorderRadius.circular(10),
@@ -387,6 +447,9 @@ class _PrimaryTaskCard extends StatelessWidget {
   }
 }
 
+// =====================
+// SECONDARY TASK TILE
+// =====================
 class _SecondaryTaskTile extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -408,7 +471,8 @@ class _SecondaryTaskTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          padding:
+          const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
           child: Row(
             children: [
               Container(

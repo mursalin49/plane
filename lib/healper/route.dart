@@ -1,3 +1,4 @@
+import 'package:avislap/views/auth/parallax_screens.dart';
 import 'package:avislap/views/home/LAVSafety.dart';
 import 'package:get/get.dart';
 
@@ -18,7 +19,8 @@ class RouteHelper {
   static List<GetPage> routes = [
     GetPage(
       name: splash,
-      page: () => FlightAnimation(),
+      // page: () => FlightAnimation(),
+      page: () => SplashScreen(),
       transition: Transition.fadeIn,
     ),
     GetPage(

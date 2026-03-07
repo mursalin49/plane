@@ -388,23 +388,69 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
         title: Row(
-          children: const [
-            Icon(Icons.info_outline_rounded, color: AppColors.mainAppColor, size: 26),
-            const SizedBox(width: 10),
-            Text("Instructions", style: TextStyle(color: AppColors.mainAppColor, fontWeight: FontWeight.w500)),
+          children: [
+            Icon(Icons.info_outline_rounded,
+                color: AppColors.mainAppColor, size: 26),
+            SizedBox(width: 10),
+            Text(
+              "Instructions",
+              style: TextStyle(
+                color: AppColors.mainAppColor,
+                fontWeight: FontWeight.w500,
+                fontSize: 18,
+              ),
+            ),
           ],
         ),
-        content: Text(
-            '''Conduct the LAV Audit as you observe the Drivers, don’t wait till the end of the shift to submit.''',
-            style: TextStyle(fontSize: 14, color: AppColors.dark, height: 1.5)),
-
+        content: Column(
+          mainAxisSize: MainAxisSize.min, // ✅ dialog size fit content
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Please submit this with as much detail as possible. 1 quality audit per shift.',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.dark,
+                height: 1.5,
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Conduct Audits Proactive and Submit them as you do them; Do not wait until the end of the shift report.',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.dark,
+                height: 1.5,
+              ),
+            ),
+            SizedBox(height: 10),
+            // ✅ Missing blue bold text
+            Text(
+              'Take picture of both passes and Fails.',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.mainAppColor,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), 
-            child: Text("OK", style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.mainAppColor))
-          )
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "OK",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.mainAppColor,
+              ),
+            ),
+          ),
         ],
       ),
     );
