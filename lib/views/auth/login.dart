@@ -91,8 +91,6 @@ class LoginScreen extends StatelessWidget {
               // Get.to(() => const EndOfShiftReportScreen());
               // Get.to(() => const NewSearchBottomSheet());
               // Get.to(() => const EmployeeOneOnOneScreen());
-              // Get.to(() => const CabinQualityAuditListScreen());
-
             }),
           ],
         ),
