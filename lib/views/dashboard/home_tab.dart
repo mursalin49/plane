@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../CabinAudit.dart';
-import '../home/cabin_secuirity.dart';
+import '../cabin_secuirity/cabin_secuirity.dart';
 
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
@@ -127,11 +127,11 @@ class _HeroSection extends StatelessWidget {
                     size: 26,
                   ),
                 ),
-                const Icon(
-                  Icons.notifications_none_outlined,
-                  color: Colors.white,
-                  size: 26,
-                ),
+                // const Icon(
+                //   Icons.notifications_none_outlined,
+                //   color: Colors.white,
+                //   size: 26,
+                // ),
               ],
             ),
             const SizedBox(height: 16),

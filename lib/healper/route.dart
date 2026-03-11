@@ -1,4 +1,4 @@
-import 'package:avislap/views/auth/parallax_screens.dart';
+import 'package:avislap/views/auth/parallax_login.dart';
 import 'package:avislap/views/home/LAVSafety.dart';
 import 'package:get/get.dart';
 
@@ -6,7 +6,7 @@ import '../views/auth/FlightAnimation.dart';
 import '../views/dashboard/dashboard_screen.dart';
 import '../views/CabinAudit.dart';
 import '../views/tasks/lav_safety_screen.dart';
-import '../views/home/cabin_secuirity.dart';
+import '../views/cabin_secuirity/cabin_secuirity.dart';
 
 class RouteHelper {
   static const String splash = '/';

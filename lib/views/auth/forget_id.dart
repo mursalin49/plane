@@ -8,26 +8,25 @@ class _C {
   static const Color ink = Color(0xFF0E0E10);
   static const Color border = Color(0xFFEAECF2);
   static const Color placeholder = Color(0xFFC8CDD9);
-  static const Color muted = Color(0xFF8891A4);
 }
 
-class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+class ForgotIdScreen extends StatefulWidget {
+  const ForgotIdScreen({super.key});
 
   @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  State<ForgotIdScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _ResetPasswordScreenState extends State<ResetPasswordScreen>
+class _ForgotPasswordScreenState extends State<ForgotIdScreen>
     with SingleTickerProviderStateMixin {
-  final _newPasswordCtrl = TextEditingController();
-  final _confirmPasswordCtrl = TextEditingController();
-  bool _obscureNew = true;
-  bool _obscureConfirm = true;
+  final _emailCtrl = TextEditingController();
 
-  // ✅ Wave circles — same as all auth screens
+  // ✅ Single wave controller — same as login & trouble screens
   late AnimationController _waveCtrl;
-  late Animation<double> _c2Scale, _c2Opacity, _c3Scale, _c3Opacity;
+  late Animation<double> _c2Scale;
+  late Animation<double> _c2Opacity;
+  late Animation<double> _c3Scale;
+  late Animation<double> _c3Opacity;
 
   @override
   void initState() {
@@ -37,6 +36,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
         vsync: this, duration: const Duration(milliseconds: 3800))
       ..repeat();
 
+    // Circle 2: medium — opens first
     _c2Scale = TweenSequence<double>([
       TweenSequenceItem(
           tween: Tween(begin: 0.35, end: 1.0)
@@ -57,6 +57,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       TweenSequenceItem(tween: ConstantTween(0.0), weight: 30),
     ]).animate(_waveCtrl);
 
+    // Circle 3: bigger — opens after circle 2 closes
     _c3Scale = TweenSequence<double>([
       TweenSequenceItem(tween: ConstantTween(0.35), weight: 42),
       TweenSequenceItem(
@@ -80,8 +81,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
   @override
   void dispose() {
-    _newPasswordCtrl.dispose();
-    _confirmPasswordCtrl.dispose();
+    _emailCtrl.dispose();
     _waveCtrl.dispose();
     super.dispose();
   }
@@ -124,7 +124,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                     children: [
                       // Subtitle
                       Text(
-                        'Enter new password & confirm the\npassword to set a new password',
+                        "Enter your email address and we'll send\nyour a link to reset your ID",
                         textAlign: TextAlign.center,
                         style: GoogleFonts.dmSans(
                           fontSize: 13.sp,
@@ -134,34 +134,86 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                       ),
                       SizedBox(height: 20.h),
 
-                      // New Password
-                      _buildField(
-                        label: 'New Password',
-                        child: _buildInput(
-                          controller: _newPasswordCtrl,
-                          hint: 'Enter new password',
-                          obscure: _obscureNew,
-                          onToggle: () =>
-                              setState(() => _obscureNew = !_obscureNew),
+                      // Email label
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Email',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: _C.blue,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+
+                      // Email input
+                      Container(
+                        height: 52.h,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30.r),
+                          border: Border.all(color: _C.border, width: 1.5),
+                        ),
+                        child: TextField(
+                          controller: _emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          style: GoogleFonts.dmSans(
+                              fontSize: 15.sp, color: _C.ink),
+                          decoration: InputDecoration(
+                            hintText: 'Enter your email',
+                            hintStyle: GoogleFonts.dmSans(
+                              fontSize: 15.sp,
+                              color: _C.placeholder,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding:
+                            EdgeInsets.symmetric(horizontal: 20.w),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 24.h),
+
+                      // Send Reset Link button
+                      GestureDetector(
+                        onTap: () {
+                          // send reset link logic
+                          Get.back();
+                        },
+                        child: Container(
+                          height: 54.h,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: _C.blue,
+                            borderRadius: BorderRadius.circular(30.r),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'SEND RESET LINK',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
                         ),
                       ),
                       SizedBox(height: 16.h),
 
-                      // Confirm Password
-                      _buildField(
-                        label: 'Confirm Password',
-                        child: _buildInput(
-                          controller: _confirmPasswordCtrl,
-                          hint: 'Confirm password',
-                          obscure: _obscureConfirm,
-                          onToggle: () => setState(
-                                  () => _obscureConfirm = !_obscureConfirm),
+                      // Back to Sign In
+                      GestureDetector(
+                        onTap: () => Get.back(),
+                        child: Text(
+                          'Back to Sign In',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14.sp,
+                            color: _C.blue,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                      SizedBox(height: 28.h),
-
-                      // Submit button
-                      _buildSubmitButton(),
                     ],
                   ),
                 ),
@@ -169,6 +221,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             ),
           ),
 
+          // Home indicator
           _buildHomeIndicator(),
         ],
       ),
@@ -190,7 +243,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       child: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
-          // Circle 1 — fixed
+          // ── Circle 1 — FIXED, outermost, always visible ──
           Positioned(
             top: -(c1Size * 0.38),
             right: -(c1Size * 0.30),
@@ -207,7 +260,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             ),
           ),
 
-          // Circle 3 — wave big
+          // ── Circle 3 — wave big ring ──
           Positioned(
             top: -(c3Size * 0.38),
             right: -(c3Size * 0.30),
@@ -234,7 +287,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             ),
           ),
 
-          // Circle 2 — wave medium
+          // ── Circle 2 — wave medium ring ──
           Positioned(
             top: -(c2Size * 0.38),
             right: -(c2Size * 0.30),
@@ -261,12 +314,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             ),
           ),
 
-          // Content
+          // ── Content ──
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: 8.h),
+                // Logo + name
                 Row(
                   children: [
                     _buildHeroMark(),
@@ -283,13 +337,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                   ],
                 ),
                 SizedBox(height: 24.h),
+
+                // Heading
                 Text(
-                  'Reset Password',
+                  'Forget ID',
                   style: GoogleFonts.dmSans(
                     fontSize: 32.sp,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                     letterSpacing: -0.8,
+                    height: 1.15,
                   ),
                 ),
                 SizedBox(height: 32.h),
@@ -297,93 +354,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ── Field + Label ─────────────────────────────────────────
-  Widget _buildField({required String label, required Widget child}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.dmSans(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: _C.blue,
-          ),
-        ),
-        SizedBox(height: 6.h),
-        child,
-      ],
-    );
-  }
-
-  Widget _buildInput({
-    required TextEditingController controller,
-    required String hint,
-    required bool obscure,
-    required VoidCallback onToggle,
-  }) {
-    return Container(
-      height: 52.h,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30.r),
-        border: Border.all(color: _C.border, width: 1.5),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure,
-        style: GoogleFonts.dmSans(fontSize: 15.sp, color: _C.ink),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.dmSans(fontSize: 15.sp, color: _C.placeholder),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 20.w),
-          suffixIcon: Padding(
-            padding: EdgeInsets.only(right: 8.w),
-            child: GestureDetector(
-              onTap: onToggle,
-              child: Icon(
-                obscure
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: _C.muted,
-                size: 20.sp,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Submit Button ─────────────────────────────────────────
-  Widget _buildSubmitButton() {
-    return GestureDetector(
-      onTap: () {
-        // submit logic
-        Get.back();
-      },
-      child: Container(
-        height: 54.h,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: _C.blue,
-          borderRadius: BorderRadius.circular(30.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'SUBMIT',
-          style: GoogleFonts.dmSans(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: 1.2,
-          ),
-        ),
       ),
     );
   }

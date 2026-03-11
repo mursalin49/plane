@@ -1,3 +1,6 @@
+import 'package:avislap/controllers/login_controller.dart';
+import 'package:avislap/views/auth/ResetPassword.dart';
+import 'package:avislap/views/auth/forget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -6,28 +9,28 @@ import 'package:google_fonts/google_fonts.dart';
 class _C {
   static const Color blue = Color(0xFF3D5AFE);
   static const Color ink = Color(0xFF0E0E10);
-  static const Color border = Color(0xFFEAECF2);
-  static const Color placeholder = Color(0xFFC8CDD9);
-  static const Color muted = Color(0xFF8891A4);
+  static const Color white = Color(0xFFFFFFFF);
 }
 
-class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+class TroubleScreen extends StatefulWidget {
+  const TroubleScreen({super.key});
 
   @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  State<TroubleScreen> createState() => _TroubleScreenState();
 }
 
-class _ResetPasswordScreenState extends State<ResetPasswordScreen>
+class _TroubleScreenState extends State<TroubleScreen>
     with SingleTickerProviderStateMixin {
-  final _newPasswordCtrl = TextEditingController();
-  final _confirmPasswordCtrl = TextEditingController();
-  bool _obscureNew = true;
-  bool _obscureConfirm = true;
+  final controller = Get.put(AuthController());
 
-  // ✅ Wave circles — same as all auth screens
+  // ✅ Single wave controller — 3.8s repeating cycle (same as login)
+  // C2: 0%→40% grow | 40%→55% hold | 55%→75% shrink | 75%→100% hidden
+  // C3: 0%→42% hidden | 42%→70% grow | 70%→80% hold | 80%→100% shrink
   late AnimationController _waveCtrl;
-  late Animation<double> _c2Scale, _c2Opacity, _c3Scale, _c3Opacity;
+  late Animation<double> _c2Scale;
+  late Animation<double> _c2Opacity;
+  late Animation<double> _c3Scale;
+  late Animation<double> _c3Opacity;
 
   @override
   void initState() {
@@ -37,51 +40,55 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
         vsync: this, duration: const Duration(milliseconds: 3800))
       ..repeat();
 
+    // Circle 2: medium — appear first (wave out from center)
     _c2Scale = TweenSequence<double>([
       TweenSequenceItem(
           tween: Tween(begin: 0.35, end: 1.0)
               .chain(CurveTween(curve: Curves.easeOutCubic)),
-          weight: 40),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 15),
+          weight: 40), // grow
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 15), // hold
       TweenSequenceItem(
           tween: Tween(begin: 1.0, end: 0.35)
               .chain(CurveTween(curve: Curves.easeInCubic)),
-          weight: 20),
-      TweenSequenceItem(tween: ConstantTween(0.35), weight: 25),
+          weight: 20), // shrink
+      TweenSequenceItem(tween: ConstantTween(0.35), weight: 25), // wait
     ]).animate(_waveCtrl);
 
     _c2Opacity = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 15),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 40),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 15),
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 30),
+      TweenSequenceItem(
+          tween: Tween(begin: 0.0, end: 1.0), weight: 15), // fade in
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 40), // visible
+      TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 0.0), weight: 15), // fade out
+      TweenSequenceItem(tween: ConstantTween(0.0), weight: 30), // hidden
     ]).animate(_waveCtrl);
 
+    // Circle 3: biggest — appear after circle 2 closes (bigger wave)
     _c3Scale = TweenSequence<double>([
-      TweenSequenceItem(tween: ConstantTween(0.35), weight: 42),
+      TweenSequenceItem(tween: ConstantTween(0.35), weight: 42), // wait
       TweenSequenceItem(
           tween: Tween(begin: 0.35, end: 1.0)
               .chain(CurveTween(curve: Curves.easeOutCubic)),
-          weight: 28),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 10),
+          weight: 28), // grow
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 10), // hold
       TweenSequenceItem(
           tween: Tween(begin: 1.0, end: 0.35)
               .chain(CurveTween(curve: Curves.easeInCubic)),
-          weight: 20),
+          weight: 20), // shrink
     ]).animate(_waveCtrl);
 
     _c3Opacity = TweenSequence<double>([
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 38),
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 14),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 24),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 24),
+      TweenSequenceItem(tween: ConstantTween(0.0), weight: 38), // hidden
+      TweenSequenceItem(
+          tween: Tween(begin: 0.0, end: 1.0), weight: 14), // fade in
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 24), // visible
+      TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 0.0), weight: 24), // fade out
     ]).animate(_waveCtrl);
   }
 
   @override
   void dispose() {
-    _newPasswordCtrl.dispose();
-    _confirmPasswordCtrl.dispose();
     _waveCtrl.dispose();
     super.dispose();
   }
@@ -97,10 +104,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       backgroundColor: const Color(0xFFF0F4FF),
       body: Column(
         children: [
-          // ── Blue Hero ──────────────────────────────────
           _buildHero(size, c1Size, c2Size, c3Size),
-
-          // ── White Card ────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               child: Transform.translate(
@@ -122,60 +126,47 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Subtitle
                       Text(
-                        'Enter new password & confirm the\npassword to set a new password',
-                        textAlign: TextAlign.center,
+                        'Please Select your issue',
                         style: GoogleFonts.dmSans(
-                          fontSize: 13.sp,
+                          fontSize: 14.sp,
                           color: Colors.grey.shade500,
-                          height: 1.5,
                         ),
                       ),
                       SizedBox(height: 20.h),
-
-                      // New Password
-                      _buildField(
-                        label: 'New Password',
-                        child: _buildInput(
-                          controller: _newPasswordCtrl,
-                          hint: 'Enter new password',
-                          obscure: _obscureNew,
-                          onToggle: () =>
-                              setState(() => _obscureNew = !_obscureNew),
-                        ),
-                      ),
+                      _buildRadioOption("I don't know my used ID ?", "id_issue"),
+                      SizedBox(height: 4.h),
+                      _buildRadioOption("I don't know my Password ?", "pass_issue"),
+                      SizedBox(height: 4.h),
+                      _buildRadioOption(
+                          "Doesn't have access to my Registered E-mail ID",
+                          "email_issue"),
+                      SizedBox(height: 24.h),
+                      _buildContinueButton(),
                       SizedBox(height: 16.h),
-
-                      // Confirm Password
-                      _buildField(
-                        label: 'Confirm Password',
-                        child: _buildInput(
-                          controller: _confirmPasswordCtrl,
-                          hint: 'Confirm password',
-                          obscure: _obscureConfirm,
-                          onToggle: () => setState(
-                                  () => _obscureConfirm = !_obscureConfirm),
+                      GestureDetector(
+                        onTap: () => Get.back(),
+                        child: Text(
+                          'Back to Sign In',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14.sp,
+                            color: _C.blue,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                      SizedBox(height: 28.h),
-
-                      // Submit button
-                      _buildSubmitButton(),
                     ],
                   ),
                 ),
               ),
             ),
           ),
-
           _buildHomeIndicator(),
         ],
       ),
     );
   }
 
-  // ── Hero ─────────────────────────────────────────────────
   Widget _buildHero(Size size, double c1Size, double c2Size, double c3Size) {
     return Container(
       width: double.infinity,
@@ -190,7 +181,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       child: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
-          // Circle 1 — fixed
+          // Circle 1 — fixed, outermost, always visible
           Positioned(
             top: -(c1Size * 0.38),
             right: -(c1Size * 0.30),
@@ -207,7 +198,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             ),
           ),
 
-          // Circle 3 — wave big
+          // Circle 3 — wave big ring (opens after C2 closes)
           Positioned(
             top: -(c3Size * 0.38),
             right: -(c3Size * 0.30),
@@ -234,7 +225,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             ),
           ),
 
-          // Circle 2 — wave medium
+          // Circle 2 — wave medium ring (opens first)
           Positioned(
             top: -(c2Size * 0.38),
             right: -(c2Size * 0.30),
@@ -266,7 +257,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 8.h),
+                SizedBox(height:25.h),
                 Row(
                   children: [
                     _buildHeroMark(),
@@ -282,14 +273,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                     ),
                   ],
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: 25.h),
                 Text(
-                  'Reset Password',
+                  'Having Trouble\nSigning in?',
                   style: GoogleFonts.dmSans(
-                    fontSize: 32.sp,
+                    fontSize: 30.sp,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                     letterSpacing: -0.8,
+                    height: 1.15,
                   ),
                 ),
                 SizedBox(height: 32.h),
@@ -297,93 +289,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ── Field + Label ─────────────────────────────────────────
-  Widget _buildField({required String label, required Widget child}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.dmSans(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: _C.blue,
-          ),
-        ),
-        SizedBox(height: 6.h),
-        child,
-      ],
-    );
-  }
-
-  Widget _buildInput({
-    required TextEditingController controller,
-    required String hint,
-    required bool obscure,
-    required VoidCallback onToggle,
-  }) {
-    return Container(
-      height: 52.h,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30.r),
-        border: Border.all(color: _C.border, width: 1.5),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure,
-        style: GoogleFonts.dmSans(fontSize: 15.sp, color: _C.ink),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.dmSans(fontSize: 15.sp, color: _C.placeholder),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 20.w),
-          suffixIcon: Padding(
-            padding: EdgeInsets.only(right: 8.w),
-            child: GestureDetector(
-              onTap: onToggle,
-              child: Icon(
-                obscure
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: _C.muted,
-                size: 20.sp,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Submit Button ─────────────────────────────────────────
-  Widget _buildSubmitButton() {
-    return GestureDetector(
-      onTap: () {
-        // submit logic
-        Get.back();
-      },
-      child: Container(
-        height: 54.h,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: _C.blue,
-          borderRadius: BorderRadius.circular(30.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'SUBMIT',
-          style: GoogleFonts.dmSans(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: 1.2,
-          ),
-        ),
       ),
     );
   }
@@ -413,6 +318,68 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       borderRadius: BorderRadius.circular(2.r),
     ),
   );
+
+  Widget _buildRadioOption(String title, String value) {
+    return Obx(() {
+      final selected = controller.selectedIssue.value == value;
+      return GestureDetector(
+        onTap: () => controller.selectedIssue.value = value,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 22.w,
+                height: 22.h,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: selected ? _C.blue : Colors.grey.shade400,
+                    width: selected ? 5.5 : 1.5,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 14.sp,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildContinueButton() {
+    return GestureDetector(
+      onTap: () => Get.to(() => ForgotPasswordScreen()),
+      child: Container(
+        height: 54.h,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: _C.blue,
+          borderRadius: BorderRadius.circular(30.r),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          'CONTINUE',
+          style: GoogleFonts.dmSans(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildHomeIndicator() {
     return Padding(

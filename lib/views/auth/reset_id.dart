@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,31 +10,43 @@ class _C {
   static const Color ink = Color(0xFF0E0E10);
   static const Color border = Color(0xFFEAECF2);
   static const Color placeholder = Color(0xFFC8CDD9);
-  static const Color muted = Color(0xFF8891A4);
 }
 
-class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+class OtpVerificationScreen extends StatefulWidget {
+  const OtpVerificationScreen({super.key});
 
   @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
-class _ResetPasswordScreenState extends State<ResetPasswordScreen>
+class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     with SingleTickerProviderStateMixin {
-  final _newPasswordCtrl = TextEditingController();
-  final _confirmPasswordCtrl = TextEditingController();
-  bool _obscureNew = true;
-  bool _obscureConfirm = true;
 
-  // ✅ Wave circles — same as all auth screens
+  // ── OTP fields ───────────────────────────────────────────
+  final int _otpLength = 5;
+  late List<TextEditingController> _controllers;
+  late List<FocusNode> _focusNodes;
+
+  // ── Resend timer ─────────────────────────────────────────
+  Timer? _timer;
+  int _secondsLeft = 0; // 0 = show "Resend OTP", >0 = show "wait for X.XX sec"
+  bool _canResend = true;
+
+  // ── Wave circles ─────────────────────────────────────────
   late AnimationController _waveCtrl;
-  late Animation<double> _c2Scale, _c2Opacity, _c3Scale, _c3Opacity;
+  late Animation<double> _c2Scale;
+  late Animation<double> _c2Opacity;
+  late Animation<double> _c3Scale;
+  late Animation<double> _c3Opacity;
 
   @override
   void initState() {
     super.initState();
 
+    _controllers = List.generate(_otpLength, (_) => TextEditingController());
+    _focusNodes = List.generate(_otpLength, (_) => FocusNode());
+
+    // Wave animation — same as login/trouble/forget
     _waveCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 3800))
       ..repeat();
@@ -76,14 +90,67 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       TweenSequenceItem(tween: ConstantTween(1.0), weight: 24),
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 24),
     ]).animate(_waveCtrl);
+
+    // Focus first box
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNodes[0].requestFocus();
+    });
+  }
+
+  // ── Resend timer logic ───────────────────────────────────
+  void _startResendTimer() {
+    setState(() {
+      _secondsLeft = 60; // 60 seconds countdown
+      _canResend = false;
+    });
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(milliseconds: 100), (t) {
+      if (!mounted) { t.cancel(); return; }
+      setState(() {
+        _secondsLeft -= 1;
+        if (_secondsLeft <= 0) {
+          _secondsLeft = 0;
+          _canResend = true;
+          t.cancel();
+        }
+      });
+    });
+  }
+
+  String get _timerText {
+    final secs = (_secondsLeft / 10).floor();
+    final tenths = _secondsLeft % 10;
+    return 'wait for $secs.$tenths sec';
   }
 
   @override
   void dispose() {
-    _newPasswordCtrl.dispose();
-    _confirmPasswordCtrl.dispose();
+    for (final c in _controllers) c.dispose();
+    for (final f in _focusNodes) f.dispose();
+    _timer?.cancel();
     _waveCtrl.dispose();
     super.dispose();
+  }
+
+  // ── OTP input handler ────────────────────────────────────
+  void _onOtpChanged(String value, int index) {
+    if (value.length == 1) {
+      if (index < _otpLength - 1) {
+        _focusNodes[index + 1].requestFocus();
+      } else {
+        _focusNodes[index].unfocus();
+      }
+    }
+  }
+
+  void _onKeyEvent(KeyEvent event, int index) {
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.backspace &&
+        _controllers[index].text.isEmpty &&
+        index > 0) {
+      _focusNodes[index - 1].requestFocus();
+      _controllers[index - 1].clear();
+    }
   }
 
   @override
@@ -97,10 +164,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       backgroundColor: const Color(0xFFF0F4FF),
       body: Column(
         children: [
-          // ── Blue Hero ──────────────────────────────────
           _buildHero(size, c1Size, c2Size, c3Size),
-
-          // ── White Card ────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               child: Transform.translate(
@@ -124,7 +188,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                     children: [
                       // Subtitle
                       Text(
-                        'Enter new password & confirm the\npassword to set a new password',
+                        'Enter the otp sent to your email address\nto reset your old ID',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.dmSans(
                           fontSize: 13.sp,
@@ -132,45 +196,133 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                           height: 1.5,
                         ),
                       ),
-                      SizedBox(height: 20.h),
+                      SizedBox(height: 24.h),
 
-                      // New Password
-                      _buildField(
-                        label: 'New Password',
-                        child: _buildInput(
-                          controller: _newPasswordCtrl,
-                          hint: 'Enter new password',
-                          obscure: _obscureNew,
-                          onToggle: () =>
-                              setState(() => _obscureNew = !_obscureNew),
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
-
-                      // Confirm Password
-                      _buildField(
-                        label: 'Confirm Password',
-                        child: _buildInput(
-                          controller: _confirmPasswordCtrl,
-                          hint: 'Confirm password',
-                          obscure: _obscureConfirm,
-                          onToggle: () => setState(
-                                  () => _obscureConfirm = !_obscureConfirm),
-                        ),
-                      ),
+                      // OTP boxes
+                      _buildOtpRow(),
                       SizedBox(height: 28.h),
 
-                      // Submit button
-                      _buildSubmitButton(),
+                      // Continue button
+                      _buildContinueButton(),
+                      SizedBox(height: 16.h),
+
+                      // Resend / Timer
+                      _canResend
+                          ? GestureDetector(
+                        onTap: _startResendTimer,
+                        child: Text(
+                          'Resend OTP',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14.sp,
+                            color: _C.blue,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                          : Text(
+                        _timerText,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 14.sp,
+                          color: _C.blue,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+
+                      // Back to Sign In
+                      GestureDetector(
+                        onTap: () => Get.back(),
+                        child: Text(
+                          'Back to Sign In',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14.sp,
+                            color: _C.blue,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
           ),
-
           _buildHomeIndicator(),
         ],
+      ),
+    );
+  }
+
+  // ── OTP Row ───────────────────────────────────────────────
+  Widget _buildOtpRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(_otpLength, (i) => _buildOtpBox(i)),
+    );
+  }
+
+  Widget _buildOtpBox(int index) {
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      onKeyEvent: (e) => _onKeyEvent(e, index),
+      child: SizedBox(
+        width: 52.w,
+        height: 58.h,
+        child: TextField(
+          controller: _controllers[index],
+          focusNode: _focusNodes[index],
+          textAlign: TextAlign.center,
+          keyboardType: TextInputType.number,
+          maxLength: 1,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: GoogleFonts.dmSans(
+            fontSize: 22.sp,
+            fontWeight: FontWeight.w600,
+            color: _C.ink,
+          ),
+          onChanged: (v) => _onOtpChanged(v, index),
+          decoration: InputDecoration(
+            counterText: '',
+            contentPadding: EdgeInsets.zero,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: BorderSide(color: _C.border, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: BorderSide(color: _C.blue, width: 2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Continue Button ───────────────────────────────────────
+  Widget _buildContinueButton() {
+    return GestureDetector(
+      onTap: () {
+        final otp = _controllers.map((c) => c.text).join();
+        // handle OTP verification
+        // Get.to(() => NextScreen());
+      },
+      child: Container(
+        height: 54.h,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: _C.blue,
+          borderRadius: BorderRadius.circular(30.r),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          'CONTINUE',
+          style: GoogleFonts.dmSans(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            letterSpacing: 1.2,
+          ),
+        ),
       ),
     );
   }
@@ -284,12 +436,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                 ),
                 SizedBox(height: 24.h),
                 Text(
-                  'Reset Password',
+                  'OTP Verification',
                   style: GoogleFonts.dmSans(
-                    fontSize: 32.sp,
+                    fontSize: 30.sp,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                     letterSpacing: -0.8,
+                    height: 1.15,
                   ),
                 ),
                 SizedBox(height: 32.h),
@@ -297,93 +450,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ── Field + Label ─────────────────────────────────────────
-  Widget _buildField({required String label, required Widget child}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.dmSans(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: _C.blue,
-          ),
-        ),
-        SizedBox(height: 6.h),
-        child,
-      ],
-    );
-  }
-
-  Widget _buildInput({
-    required TextEditingController controller,
-    required String hint,
-    required bool obscure,
-    required VoidCallback onToggle,
-  }) {
-    return Container(
-      height: 52.h,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30.r),
-        border: Border.all(color: _C.border, width: 1.5),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure,
-        style: GoogleFonts.dmSans(fontSize: 15.sp, color: _C.ink),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.dmSans(fontSize: 15.sp, color: _C.placeholder),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 20.w),
-          suffixIcon: Padding(
-            padding: EdgeInsets.only(right: 8.w),
-            child: GestureDetector(
-              onTap: onToggle,
-              child: Icon(
-                obscure
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: _C.muted,
-                size: 20.sp,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Submit Button ─────────────────────────────────────────
-  Widget _buildSubmitButton() {
-    return GestureDetector(
-      onTap: () {
-        // submit logic
-        Get.back();
-      },
-      child: Container(
-        height: 54.h,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: _C.blue,
-          borderRadius: BorderRadius.circular(30.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'SUBMIT',
-          style: GoogleFonts.dmSans(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: 1.2,
-          ),
-        ),
       ),
     );
   }

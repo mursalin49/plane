@@ -4,10 +4,10 @@ import 'package:avislap/utils/app_images.dart';
 import 'package:avislap/utils/app_text.dart';
 import 'package:avislap/views/CabinAudit.dart';
 import 'package:avislap/views/auth/comon_widets.dart';
-import 'package:avislap/views/auth/trouble.dart';
+import 'package:avislap/views/auth/trouble_screen.dart';
 import 'package:avislap/views/dashboard/dashboard_screen.dart';
 import 'package:avislap/views/extra/CabinQualityAuditList.dart';
-import 'package:avislap/views/extra/CabinSecurityTrainingScreen.dart';
+
 import 'package:avislap/views/extra/EndOfShiftReportScreen.dart';
 import 'package:avislap/views/extra/LavSafetyObservationScreen.dart';
 import 'package:avislap/views/extra/employee_one_screen.dart';
@@ -76,7 +76,7 @@ class LoginScreen extends StatelessWidget {
                   ],
                 ),
                 TextButton(
-                  onPressed: () => Get.to(() => trouble()),
+                  onPressed: () => Get.to(() => const TroubleScreen()),
                   child: AppText("Trouble Signing in?", fontSize: 13, color: AppColors.mainAppColor),
                 ),
               ],

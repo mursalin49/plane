@@ -6,33 +6,32 @@ import 'package:google_fonts/google_fonts.dart';
 class _C {
   static const Color blue = Color(0xFF3D5AFE);
   static const Color ink = Color(0xFF0E0E10);
-  static const Color border = Color(0xFFEAECF2);
-  static const Color placeholder = Color(0xFFC8CDD9);
-  static const Color muted = Color(0xFF8891A4);
 }
 
-class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+class ResetSuccessScreen extends StatefulWidget {
+  const ResetSuccessScreen({super.key});
 
   @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  State<ResetSuccessScreen> createState() => _ResetSuccessScreenState();
 }
 
-class _ResetPasswordScreenState extends State<ResetPasswordScreen>
+class _ResetSuccessScreenState extends State<ResetSuccessScreen>
     with SingleTickerProviderStateMixin {
-  final _newPasswordCtrl = TextEditingController();
-  final _confirmPasswordCtrl = TextEditingController();
-  bool _obscureNew = true;
-  bool _obscureConfirm = true;
 
   // ✅ Wave circles — same as all auth screens
   late AnimationController _waveCtrl;
   late Animation<double> _c2Scale, _c2Opacity, _c3Scale, _c3Opacity;
 
+  // ✅ Check icon animation
+  late AnimationController _checkCtrl;
+  late Animation<double> _checkScale;
+  late Animation<double> _checkOpacity;
+
   @override
   void initState() {
     super.initState();
 
+    // Wave
     _waveCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 3800))
       ..repeat();
@@ -76,13 +75,27 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       TweenSequenceItem(tween: ConstantTween(1.0), weight: 24),
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 24),
     ]).animate(_waveCtrl);
+
+    // ✅ Check icon bounce-in animation
+    _checkCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700));
+    _checkScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _checkCtrl, curve: Curves.elasticOut));
+    _checkOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+            parent: _checkCtrl,
+            curve: const Interval(0.0, 0.4, curve: Curves.easeIn)));
+
+    // Start check after short delay
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _checkCtrl.forward();
+    });
   }
 
   @override
   void dispose() {
-    _newPasswordCtrl.dispose();
-    _confirmPasswordCtrl.dispose();
     _waveCtrl.dispose();
+    _checkCtrl.dispose();
     super.dispose();
   }
 
@@ -102,68 +115,104 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
           // ── White Card ────────────────────────────────
           Expanded(
-            child: SingleChildScrollView(
-              child: Transform.translate(
-                offset: const Offset(0, -30),
-                child: Container(
-                  margin: EdgeInsets.symmetric(horizontal: 16.w),
-                  padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 28.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.07),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Subtitle
-                      Text(
-                        'Enter new password & confirm the\npassword to set a new password',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 13.sp,
-                          color: Colors.grey.shade500,
-                          height: 1.5,
+            child: Transform.translate(
+              offset: const Offset(0, -30),
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 16.w),
+                padding: EdgeInsets.fromLTRB(24.w, 40.h, 24.w, 36.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.07),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // ✅ Animated check icon
+                    AnimatedBuilder(
+                      animation: _checkCtrl,
+                      builder: (_, __) => Opacity(
+                        opacity: _checkOpacity.value,
+                        child: Transform.scale(
+                          scale: _checkScale.value,
+                          child: Container(
+                            width: 72.w,
+                            height: 72.h,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border:
+                              Border.all(color: _C.blue, width: 2.5),
+                            ),
+                            child: Icon(
+                              Icons.check_rounded,
+                              color: _C.blue,
+                              size: 36.sp,
+                            ),
+                          ),
                         ),
                       ),
-                      SizedBox(height: 20.h),
+                    ),
+                    SizedBox(height: 24.h),
 
-                      // New Password
-                      _buildField(
-                        label: 'New Password',
-                        child: _buildInput(
-                          controller: _newPasswordCtrl,
-                          hint: 'Enter new password',
-                          obscure: _obscureNew,
-                          onToggle: () =>
-                              setState(() => _obscureNew = !_obscureNew),
+                    // Title
+                    Text(
+                      'ID Reset\nSuccessful',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w700,
+                        color: _C.blue,
+                        letterSpacing: -0.5,
+                        height: 1.2,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+
+                    // Subtitle
+                    Text(
+                      'You can now login with your\nNew ID',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 13.sp,
+                        color: Colors.grey.shade500,
+                        height: 1.5,
+                      ),
+                    ),
+                    SizedBox(height: 32.h),
+
+                    // GO TO SIGN IN button
+                    GestureDetector(
+                      onTap: () {
+                        // Navigate back to login, clearing stack
+                        Get.offAllNamed('/login');
+                        // or: Get.offAll(() => const LoginScreen());
+                      },
+                      child: Container(
+                        height: 54.h,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: _C.blue,
+                          borderRadius: BorderRadius.circular(30.r),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'GO TO SIGN IN',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                       ),
-                      SizedBox(height: 16.h),
-
-                      // Confirm Password
-                      _buildField(
-                        label: 'Confirm Password',
-                        child: _buildInput(
-                          controller: _confirmPasswordCtrl,
-                          hint: 'Confirm password',
-                          obscure: _obscureConfirm,
-                          onToggle: () => setState(
-                                  () => _obscureConfirm = !_obscureConfirm),
-                        ),
-                      ),
-                      SizedBox(height: 28.h),
-
-                      // Submit button
-                      _buildSubmitButton(),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -284,7 +333,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                 ),
                 SizedBox(height: 24.h),
                 Text(
-                  'Reset Password',
+                  'Reset ID',
                   style: GoogleFonts.dmSans(
                     fontSize: 32.sp,
                     fontWeight: FontWeight.w700,
@@ -297,93 +346,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ── Field + Label ─────────────────────────────────────────
-  Widget _buildField({required String label, required Widget child}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.dmSans(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: _C.blue,
-          ),
-        ),
-        SizedBox(height: 6.h),
-        child,
-      ],
-    );
-  }
-
-  Widget _buildInput({
-    required TextEditingController controller,
-    required String hint,
-    required bool obscure,
-    required VoidCallback onToggle,
-  }) {
-    return Container(
-      height: 52.h,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30.r),
-        border: Border.all(color: _C.border, width: 1.5),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure,
-        style: GoogleFonts.dmSans(fontSize: 15.sp, color: _C.ink),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.dmSans(fontSize: 15.sp, color: _C.placeholder),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 20.w),
-          suffixIcon: Padding(
-            padding: EdgeInsets.only(right: 8.w),
-            child: GestureDetector(
-              onTap: onToggle,
-              child: Icon(
-                obscure
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: _C.muted,
-                size: 20.sp,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Submit Button ─────────────────────────────────────────
-  Widget _buildSubmitButton() {
-    return GestureDetector(
-      onTap: () {
-        // submit logic
-        Get.back();
-      },
-      child: Container(
-        height: 54.h,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: _C.blue,
-          borderRadius: BorderRadius.circular(30.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'SUBMIT',
-          style: GoogleFonts.dmSans(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: 1.2,
-          ),
-        ),
       ),
     );
   }
