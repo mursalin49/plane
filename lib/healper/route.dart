@@ -14,7 +14,7 @@ class RouteHelper {
   static const String cabinAudit = '/cabin-audit';
   // static const String lavSafety = '/lav-safety';
   static const String lavSafety = '/LAVSafety';
-  static const String cabinSecurityTraining = '/cabin-security-training';
+  static const String cabinSecurityTraining = '/cabin_secuirity';
 
   static List<GetPage> routes = [
     GetPage(
@@ -40,7 +40,7 @@ class RouteHelper {
     ),
     GetPage(
       name: cabinSecurityTraining,
-      page: () => CabinAuditScreenS(),
+      page: () => const CabinQualityAuditScreenN(),
       transition: Transition.rightToLeft,
     ),
   ];

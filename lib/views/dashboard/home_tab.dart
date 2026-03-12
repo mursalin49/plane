@@ -18,16 +18,7 @@ class HomeTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       // ✅ Drawer
-      drawer: AppDrawerWidget(
-        appName: 'Parallax',
-        userName: 'Shara Page',
-        userRole: 'General Manager',
-        userImage: 'assets/images/nirob.jpg',
-        onLogout: () {
-          Get.back();
-          // logout logic
-        },
-      ),
+      drawer: AppDrawerWidget(),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -54,7 +45,7 @@ class HomeTab extends StatelessWidget {
                     onCabinAudit: () => Get.to(() => CabinAuditScreen()),
                     onLavSafety: () => Get.to(() => LAVSafetyScreen()),
                     onCabinSecurity: () =>
-                        Get.to(() => const CabinAuditScreenS()),
+                        Get.to(() => const CabinQualityAuditScreenN()),
                   ),
                   const SizedBox(height: 32),
                 ],

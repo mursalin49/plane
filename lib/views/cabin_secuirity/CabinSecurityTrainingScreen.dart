@@ -1,9 +1,12 @@
+import 'package:avislap/utils/app_colors.dart';
+import 'package:avislap/views/cabin_secuirity/cabin_secuirity.dart';
+import 'package:avislap/views/cabin_secuirity/training_filter.dart';
+import 'package:avislap/views/extra/CabinQualityAuditScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// =====================
 // COLORS
 // =====================
 class _Colors {
@@ -17,6 +20,7 @@ class _Colors {
   static const Color divider = Color(0xFFEEEEEE);
   static const Color pass = Color(0xFF4CAF50);
   static const Color fail = Color(0xFFE53935);
+  static const Color newAuditBtn = Color(0xFF3D5AFE);
 }
 
 // =====================
@@ -176,7 +180,14 @@ class _CabinSecurityScreenState
               ),
             ),
           ),
-          Icon(Icons.add_circle_outline, color: _Colors.primary, size: 24.sp),
+          IconButton(
+            icon: Icon(Icons.more_vert, color: AppColors.mainAppColor, size: 24.sp),
+            onPressed: () => Get.bottomSheet(
+              const NewSearchSheet(),
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+            ),
+          )
         ],
       ),
     );
@@ -185,22 +196,51 @@ class _CabinSecurityScreenState
   // ── Section Header ───────────────────────────────────────
   Widget _buildSectionHeader() {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          width: 4.w,
-          height: 22.h,
-          decoration: BoxDecoration(
-            color: _Colors.primary,
-            borderRadius: BorderRadius.circular(2.r),
-          ),
+        Row(
+          children: [
+            Container(
+              width: 4.w,
+              height: 22.h,
+              decoration: BoxDecoration(
+                color: _Colors.primary,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Text(
+              'Past Trainings',
+              style: GoogleFonts.poppins(
+                fontSize: 17.sp,
+                fontWeight: FontWeight.w700,
+                color: _Colors.textDark,
+              ),
+            ),
+          ],
         ),
-        SizedBox(width: 10.w),
-        Text(
-          'Past Trainings',
-          style: GoogleFonts.poppins(
-            fontSize: 17.sp,
-            fontWeight: FontWeight.w700,
-            color: _Colors.textDark,
+
+        // ✅ New Audit button
+        GestureDetector(
+          onTap: () {
+            // Need to import CabinAuditScreenS if not already imported
+            Get.to(() => const CabinQualityAuditScreenN());
+          },
+          child: Container(
+            padding:
+            EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: _Colors.newAuditBtn,
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Text(
+              'New Audit',
+              style: GoogleFonts.poppins(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
       ],
@@ -225,11 +265,15 @@ class _CabinSecurityScreenState
 
   // ── Training Card ─────────────────────────────────────────
   Widget _buildTrainingCard(TrainingItem item) {
-    return Container(
-      color: _Colors.cardBg,
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () {
+        Get.to(() => CabinQualityAuditScreen());
+      },
+      child: Container(
+        color: _Colors.cardBg,
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Avatar with blue border + green dot
           Stack(
@@ -352,7 +396,7 @@ class _CabinSecurityScreenState
           ),
         ],
       ),
-    );
+      ) );
   }
 
   // ── Location Image ────────────────────────────────────────

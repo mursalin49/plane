@@ -1,3 +1,4 @@
+import 'package:avislap/views/CabinAudit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -227,7 +228,7 @@ class _CabinQualityAuditListScreenState
         // ✅ New Audit button
         GestureDetector(
           onTap: () {
-            // Navigate to new audit form
+            Get.to(() => CabinAuditScreen());
           },
           child: Container(
             padding:

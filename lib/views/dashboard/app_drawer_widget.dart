@@ -1,44 +1,27 @@
+import 'package:avislap/views/cabin_secuirity/CabinSecurityTrainingScreen.dart';
+import 'package:avislap/views/extra/CabinQualityAuditList.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:avislap/views/extra/LavSafetyObservationScreen.dart';
+import 'package:avislap/views/CabinAudit.dart';
+import 'package:avislap/views/cabin_secuirity/cabin_secuirity.dart';
 
+// MODELS
 // =====================
-// COLORS
-// =====================
-class _DC {
-  static const Color primary = Color(0xFF3D5AFE);
-  static const Color bg = Color(0xFFEEF1FB);
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color textDark = Color(0xFF1A1A2E);
-  static const Color textGrey = Color(0xFF8891A4);
-  static const Color activeText = Color(0xFF3D5AFE);
-  static const Color subItem = Color(0xFF3D5AFE);
-  static const Color bottomBar = Color(0xFF3D5AFE);
+class DrawerSubItem {
+  final String title;
+  final IconData? icon;
+  const DrawerSubItem({required this.title, this.icon});
 }
 
-// =====================
-// MODEL
-// =====================
 class DrawerMenuItem {
   final String title;
   final IconData icon;
   final List<DrawerSubItem>? subItems;
-  final bool hasChildren;
-
-  DrawerMenuItem({
-    required this.title,
-    required this.icon,
-    this.subItems,
-    this.hasChildren = false,
-  });
-}
-
-class DrawerSubItem {
-  final String title;
-  final IconData icon;
-
-  DrawerSubItem({required this.title, required this.icon});
+  const DrawerMenuItem({required this.title, required this.icon, this.subItems});
+  bool get hasChildren => subItems != null && subItems!.isNotEmpty;
 }
 
 // =====================
@@ -46,128 +29,121 @@ class DrawerSubItem {
 // =====================
 class AppDrawerController extends GetxController {
   final RxString expandedItem = ''.obs;
+  final RxString activeItem = 'Dashboard'.obs;
 
-  final List<DrawerMenuItem> menuItems = [
-    DrawerMenuItem(
-      title: 'Dashboard',
-      icon: Icons.pie_chart_outline,
-    ),
+  final List<DrawerMenuItem> menuItems = const [
+    DrawerMenuItem(title: 'Dashboard', icon: Icons.pie_chart_outline_rounded),
     DrawerMenuItem(
       title: 'My Employees',
-      icon: Icons.people_outline,
-      hasChildren: true,
+
+
+      icon: Icons.people_outline_rounded,
       subItems: [
-        DrawerSubItem(
-            title: 'Employees Detail', icon: Icons.person_outline),
-        DrawerSubItem(
-            title: 'Directory', icon: Icons.phone_outlined),
+        DrawerSubItem(title: 'Employee Detail', icon: Icons.person_outline_rounded),
+        DrawerSubItem(title: 'Directory', icon: Icons.phone_outlined),
       ],
     ),
     DrawerMenuItem(
       title: 'Forms',
       icon: Icons.insert_drive_file_outlined,
-      hasChildren: true,
       subItems: [
-        DrawerSubItem(title: 'New Form', icon: Icons.add_outlined),
-        DrawerSubItem(
-            title: 'Form History', icon: Icons.history_outlined),
+        DrawerSubItem(title: 'Cabin Quality Audit'),
+        DrawerSubItem(title: 'Cabin Security Search Training'),
+        DrawerSubItem(title: 'LAV Safety Observation'),
       ],
     ),
-    DrawerMenuItem(
-      title: 'Inventory',
-      icon: Icons.bar_chart_outlined,
-    ),
-    DrawerMenuItem(
-      title: 'Chat',
-      icon: Icons.chat_bubble_outline,
-    ),
+    DrawerMenuItem(title: 'Inventory', icon: Icons.grid_view_outlined),
+    DrawerMenuItem(title: 'Chat', icon: Icons.chat_bubble_outline_rounded),
     DrawerMenuItem(
       title: 'Time and Edits',
-      icon: Icons.access_time_outlined,
-      hasChildren: true,
+      icon: Icons.access_time_rounded,
       subItems: [
-        DrawerSubItem(
-            title: 'Time Sheet', icon: Icons.calendar_today_outlined),
-        DrawerSubItem(
-            title: 'Edit Requests', icon: Icons.edit_outlined),
+        DrawerSubItem(title: 'Time Sheet', icon: Icons.calendar_today_outlined),
+        DrawerSubItem(title: 'Edit Requests', icon: Icons.edit_outlined),
       ],
     ),
-    DrawerMenuItem(
-      title: 'Feedback',
-      icon: Icons.people_alt_outlined,
-    ),
+    DrawerMenuItem(title: 'Feedback', icon: Icons.people_alt_outlined),
   ];
 
-  void toggleExpand(String title) {
-    if (expandedItem.value == title) {
-      expandedItem.value = '';
-    } else {
-      expandedItem.value = title;
-    }
-  }
-
+  void toggleExpand(String title) =>
+      expandedItem.value = expandedItem.value == title ? '' : title;
+  void setActive(String title) => activeItem.value = title;
   bool isExpanded(String title) => expandedItem.value == title;
+  bool isActive(String title) => activeItem.value == title;
 }
 
 // =====================
-// APP DRAWER WIDGET
+// DRAWER WIDGET
 // =====================
 class AppDrawerWidget extends StatelessWidget {
   final String appName;
-  final String userName;
-  final String userRole;
+  final String? userName;
+  final String? userRole;
   final String? userImage;
   final VoidCallback? onLogout;
 
   AppDrawerWidget({
     super.key,
-    this.appName = 'Appname',
-    this.userName = 'Shara Page',
-    this.userRole = 'General Manager',
+    this.appName = 'Parallax',
+    this.userName,
+    this.userRole,
     this.userImage,
     this.onLogout,
   });
 
-  final AppDrawerController _controller =
-      Get.put(AppDrawerController());
+  final AppDrawerController _ctrl = Get.put(AppDrawerController());
+  static const Color _blue = Color(0xFF3D5AFE);
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      width: 280.w,
-      backgroundColor: _DC.bg,
-      child: Column(
-        children: [
-          _buildHeader(),
-          Expanded(child: _buildMenuList()),
-          _buildBottomBar(),
-        ],
+      width: 290.w,
+      backgroundColor: _blue,
+      elevation: 0,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            SizedBox(height: 8.h),
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: _ctrl.menuItems.length,
+                itemBuilder: (_, i) => _buildItem(_ctrl.menuItems[i]),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // ── Header ───────────────────────────────────────────────
+  // ── Logo header ────────────────────────────────────────
   Widget _buildHeader() {
-    return Container(
-      color: _DC.primary,
-      padding: EdgeInsets.only(
-        top: 50.h,
-        bottom: 16.h,
-        left: 16.w,
-        right: 16.w,
-      ),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 8.h),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Get.back(),
-            child: Icon(Icons.arrow_back,
-                color: Colors.white, size: 22.sp),
+          SizedBox(
+            height: 17.h,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _logoBar(17.h, 1.0),
+                SizedBox(width: 3.w),
+                _logoBar(12.h, 0.5),
+                SizedBox(width: 3.w),
+                _logoBar(7.h, 0.22),
+              ],
+            ),
           ),
-          SizedBox(width: 16.w),
+          SizedBox(width: 10.w),
           Text(
             appName,
-            style: GoogleFonts.poppins(
-              fontSize: 18.sp,
+            style: GoogleFonts.dmSans(
+              fontSize: 16.sp,
               fontWeight: FontWeight.w600,
               color: Colors.white,
             ),
@@ -177,188 +153,228 @@ class AppDrawerWidget extends StatelessWidget {
     );
   }
 
-  // ── Menu List ────────────────────────────────────────────
-  Widget _buildMenuList() {
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(vertical: 8.h),
-      itemCount: _controller.menuItems.length,
-      itemBuilder: (context, index) {
-        final item = _controller.menuItems[index];
-        return _buildMenuItem(item);
-      },
-    );
-  }
+  Widget _logoBar(double h, double opacity) => Container(
+    width: 3.5.w,
+    height: h,
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: opacity),
+      borderRadius: BorderRadius.circular(2.r),
+    ),
+  );
 
-  Widget _buildMenuItem(DrawerMenuItem item) {
+  // ── Menu item ──────────────────────────────────────────
+  Widget _buildItem(DrawerMenuItem item) {
     return Obx(() {
-      final expanded = _controller.isExpanded(item.title);
+      final expanded = _ctrl.isExpanded(item.title);
+      final active = _ctrl.isActive(item.title);
+      final isActiveLeaf = active && !item.hasChildren;
 
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Main item
-          InkWell(
+          // Main row
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () {
               if (item.hasChildren) {
-                _controller.toggleExpand(item.title);
+                _ctrl.toggleExpand(item.title);
               } else {
+                _ctrl.setActive(item.title);
                 Get.back();
-                // Navigate to respective screen
               }
             },
             child: Container(
-              padding: EdgeInsets.symmetric(
-                  horizontal: 20.w, vertical: 14.h),
+              margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 3.h),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+              decoration: BoxDecoration(
+                // ✅ Active item (Dashboard etc) → white card
+                color: isActiveLeaf ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(14.r),
+              ),
               child: Row(
                 children: [
                   Icon(
                     item.icon,
-                    color: _DC.primary,
-                    size: 22.sp,
+                    size: 20.sp,
+                    color: isActiveLeaf ? _blue : Colors.white,
                   ),
-                  SizedBox(width: 16.w),
+                  SizedBox(width: 14.w),
                   Expanded(
                     child: Text(
                       item.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w500,
-                        color: expanded
-                            ? _DC.activeText
-                            : _DC.textDark,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: isActiveLeaf ? _blue : Colors.white,
                       ),
                     ),
                   ),
+                  // ✅ Collapsed = chevron right, Expanded = chevron down
                   if (item.hasChildren)
-                    AnimatedRotation(
-                      turns: expanded ? 0 : 0.5,
-                      duration: const Duration(milliseconds: 200),
-                      child: Icon(
-                        Icons.keyboard_arrow_up,
-                        color: _DC.primary,
-                        size: 20.sp,
-                      ),
+                    Icon(
+                      expanded
+                          ? Icons.keyboard_arrow_down_rounded
+                          : Icons.chevron_right_rounded,
+                      size: 21.sp,
+                      color: Colors.white.withValues(alpha: 0.8),
                     ),
                 ],
               ),
             ),
           ),
 
-          // Sub items
-          AnimatedCrossFade(
-            firstChild: const SizedBox.shrink(),
-            secondChild: Column(
-              children: (item.subItems ?? []).map((sub) {
-                return InkWell(
-                  onTap: () {
-                    Get.back();
-                    // Navigate to sub screen
-                  },
-                  child: Container(
-                    padding: EdgeInsets.only(
-                      left: 58.w,
-                      right: 20.w,
-                      top: 12.h,
-                      bottom: 12.h,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          sub.icon,
-                          color: _DC.subItem,
-                          size: 18.sp,
-                        ),
-                        SizedBox(width: 12.w),
-                        Text(
-                          sub.title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w400,
-                            color: _DC.textDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+          // ✅ Sub-items with vertical line
+          if (item.hasChildren)
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 220),
+              crossFadeState: expanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              firstChild: const SizedBox.shrink(),
+              secondChild: _buildSubList(item.subItems!),
             ),
-            crossFadeState: expanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 250),
-          ),
         ],
       );
     });
   }
 
-  // ── Bottom Bar ───────────────────────────────────────────
-  Widget _buildBottomBar() {
-    return Container(
-      color: _DC.primary,
-      padding: EdgeInsets.symmetric(
-          horizontal: 16.w, vertical: 14.h),
-      child: Row(
-        children: [
-          // Avatar
-          CircleAvatar(
-            radius: 22.r,
-            backgroundImage: userImage != null
-                ? AssetImage(userImage!)
-                : null,
-            backgroundColor: Colors.white24,
-            child: userImage == null
-                ? Icon(Icons.person,
-                    color: Colors.white, size: 22.sp)
-                : null,
-          ),
-          SizedBox(width: 12.w),
+  // ── Sub list with bracket connector (└) ────────────────
+  Widget _buildSubList(List<DrawerSubItem> subs) {
+    const double itemH = 44.0;
+    const double bracketW = 16.0;
 
-          // Name & role
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  userName,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  userRole,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.sp,
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
+    return Padding(
+      padding: EdgeInsets.only(left: 28.w, right: 12.w, bottom: 6.h),
+      child: Stack(
+        children: [
+          // ✅ CustomPainter: vertical line + horizontal bracket per item
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _BracketLinePainter(
+                itemCount: subs.length,
+                itemHeight: itemH,
+                bracketWidth: bracketW,
+                color: Colors.white.withValues(alpha: 0.45),
+                strokeWidth: 1.5,
+              ),
             ),
           ),
 
-          // Logout button
-          GestureDetector(
-            onTap: onLogout ?? () => Get.back(),
-            child: Row(
-              children: [
-                Icon(Icons.logout,
-                    color: Colors.white, size: 18.sp),
-                SizedBox(width: 4.w),
-                Text(
-                  'Logout',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+          // Sub items — indented past the bracket
+          Padding(
+            padding: const EdgeInsets.only(left: bracketW + 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: subs.map((s) => _buildSubItem(s, itemH)).toList(),
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildSubItem(DrawerSubItem sub, double itemH) {
+    return Obx(() {
+      final active = _ctrl.isActive(sub.title);
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          _ctrl.setActive(sub.title);
+          
+          Get.back(); // Close drawer first
+
+          if (sub.title == 'LAV Safety Observation') {
+            Get.to(() =>  LavSafetyObservationScreen());
+          } else if (sub.title == 'Cabin Quality Audit') {
+            Get.to(() =>  CabinQualityAuditListScreen());
+          } else if (sub.title == 'Cabin Security Search Training') {
+            Get.to(() =>  CabinSecurityScreen ());
+          }
+        },
+        child: SizedBox(
+          height: itemH,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Row(
+              children: [
+                if (sub.icon != null) ...[
+                  Icon(
+                    sub.icon,
+                    size: 16.sp,
+                    color: Colors.white.withValues(alpha: active ? 1.0 : 0.72),
+                  ),
+                  SizedBox(width: 9.w),
+                ],
+                Expanded(
+                  child: Text(
+                    sub.title,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14.sp,
+                      fontWeight: active ? FontWeight.w600 : FontWeight.w600,
+                      color: Colors.white.withValues(alpha: active ? 1.0 : 0.82),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
+  }
+}
+
+// =====================
+// CUSTOM PAINTER — bracket connector (└)
+// =====================
+class _BracketLinePainter extends CustomPainter {
+  final int itemCount;
+  final double itemHeight;
+  final double bracketWidth;
+  final Color color;
+  final double strokeWidth;
+
+  const _BracketLinePainter({
+    required this.itemCount,
+    required this.itemHeight,
+    required this.bracketWidth,
+    required this.color,
+    this.strokeWidth = 1.5,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    // Vertical line: from top to last item midpoint
+    final double totalHeight = itemCount * itemHeight;
+    final double lastMidY = (itemCount - 1) * itemHeight + itemHeight / 2;
+
+    // Draw main vertical line
+    canvas.drawLine(
+      const Offset(0, 0),
+      Offset(0, lastMidY),
+      paint,
+    );
+
+    // Draw horizontal bracket for each item (└ shape)
+    for (int i = 0; i < itemCount; i++) {
+      final double midY = i * itemHeight + itemHeight / 2;
+      canvas.drawLine(
+        Offset(0, midY),
+        Offset(bracketWidth, midY),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BracketLinePainter old) =>
+      old.itemCount != itemCount ||
+          old.itemHeight != itemHeight ||
+          old.color != color;
 }

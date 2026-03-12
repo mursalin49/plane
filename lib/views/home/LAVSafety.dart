@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:avislap/utils/app_colors.dart';
 import 'package:avislap/utils/app_icons.dart';
 import 'package:avislap/utils/app_text.dart';
@@ -6,6 +7,7 @@ import 'package:avislap/widgets/report_submit_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 class LAVSafetyScreen extends StatefulWidget {
   @override
@@ -14,7 +16,21 @@ class LAVSafetyScreen extends StatefulWidget {
 
 class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
   final Map<String, String?> _selectedValues = {};
+  final Map<String, List<File>> _uploadedImages = {}; // per-section images
+  final ImagePicker _picker = ImagePicker();
   bool _isChecklistExpanded = false;
+
+  Future<void> _pickImagesFor(String key) async {
+    final List<XFile> images = await _picker.pickMultiImage();
+    if (images.isNotEmpty) {
+      setState(() {
+        _uploadedImages[key] = [
+          ...(_uploadedImages[key] ?? []),
+          ...images.map((img) => File(img.path)),
+        ];
+      });
+    }
+  }
 
   static const double _cardRadius = 16;
   static const double _inputRadius = 12;
@@ -121,7 +137,7 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
                      color: AppColors.mainAppColor,
                    ),
                    const SizedBox(height: 8),
-                   _buildUploadBox(),
+                   _buildUploadBox('pictures'),
                 ],
               ),
               const SizedBox(height: 28),
@@ -185,7 +201,7 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
           ),
           if (showImageUpload) ...[
             const SizedBox(height: 10),
-            _buildUploadBox(),
+            _buildUploadBox(key),
           ],
           const SizedBox(height: 10),
         ],
@@ -363,23 +379,64 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
     );
   }
 
-  Widget _buildUploadBox() {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(_inputRadius),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.cloud_upload_outlined, color: AppColors.from_heading, size: 22),
-          const SizedBox(width: 8),
-          Text("Upload image", style: TextStyle(color: AppColors.from_heading, fontSize: 14)),
+  Widget _buildUploadBox(String key) {
+    final images = _uploadedImages[key] ?? [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () => _pickImagesFor(key),
+          child: Container(
+            width: double.infinity,
+            height: 56,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(_inputRadius),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.cloud_upload_outlined, color: AppColors.from_heading, size: 22),
+                const SizedBox(width: 8),
+                Text("Upload images", style: TextStyle(color: AppColors.from_heading, fontSize: 14)),
+              ],
+            ),
+          ),
+        ),
+        if (images.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: images.map((file) {
+              return Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(file, width: 72, height: 72, fit: BoxFit.cover),
+                  ),
+                  Positioned(
+                    top: 3,
+                    right: 3,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _uploadedImages[key]!.remove(file)),
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 13),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
         ],
-      ),
+      ],
     );
   }
 

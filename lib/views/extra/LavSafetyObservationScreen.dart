@@ -1,3 +1,4 @@
+import 'package:avislap/views/home/LAVSafety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -176,11 +177,21 @@ class _LavSafetyObservationScreenState
               ),
             ),
           ),
-          Icon(
-            Icons.add_circle_outline,
-            color: _Colors.primary,
-            size: 24.sp,
-          ),
+          IconButton(
+            icon: Icon(
+              Icons.add_circle_outline,
+              color: _Colors.primary,
+              size: 24.sp,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LAVSafetyScreen(),
+                ),
+              );
+            },
+          )
         ],
       ),
     );
@@ -232,11 +243,15 @@ class _LavSafetyObservationScreenState
 
   // ── Observation Card ─────────────────────────────────────
   Widget _buildObservationCard(ObservationItem item) {
-    return Container(
-      color: _Colors.cardBg,
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () {
+        Get.to(() => LAVSafetyScreen());
+      },
+      child: Container(
+        color: _Colors.cardBg,
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ✅ Observer Avatar with blue border + green dot
           Stack(
@@ -399,6 +414,6 @@ class _LavSafetyObservationScreenState
           ),
         ],
       ),
-    );
+      ));
   }
 }

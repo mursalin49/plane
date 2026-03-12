@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:avislap/views/dashboard/dashboard_screen.dart';
 import 'package:avislap/views/auth/forget.dart';
+import 'package:avislap/views/select_station/select_station.dart';
 
 // =====================
 // COLORS
@@ -237,14 +238,9 @@ class _LoginScreenState extends State<LoginScreen>
   late AnimationController _shimmerCtrl;
   late Animation<double> _shimmerAnim;
 
-  // ✅ Single wave controller — drives both circle 2 & 3
-  // Timeline (0.0 → 1.0 per 3800ms cycle):
-  //   C2: 0.00–0.40 grow, 0.40–0.55 hold, 0.55–0.75 shrink, 0.75–1.0 hidden
-  //   C3: 0.00–0.45 hidden, 0.45–0.70 grow, 0.70–0.80 hold, 0.80–1.0 shrink
+  // ✅ Fast pulse controller — each circle blinks on/off from fixed position
   late AnimationController _waveCtrl;
-  late Animation<double> _c2Scale;
   late Animation<double> _c2Opacity;
-  late Animation<double> _c3Scale;
   late Animation<double> _c3Opacity;
 
   @override
@@ -283,55 +279,30 @@ class _LoginScreenState extends State<LoginScreen>
     _shimmerAnim =
         Tween<double>(begin: -1.5, end: 2.5).animate(_shimmerCtrl);
 
-    // ✅ Wave controller — 3.8s cycle, repeating forever
+    // ✅ Fast pulse — 1.4s cycle, circles blink on/off from their fixed positions
     _waveCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 3800))
+        vsync: this, duration: const Duration(milliseconds: 2000))
       ..repeat();
 
-    // Circle 2: medium — appear first (wave out from center)
-    _c2Scale = TweenSequence<double>([
-      TweenSequenceItem(
-          tween: Tween(begin: 0.35, end: 1.0)
-              .chain(CurveTween(curve: Curves.easeOutCubic)),
-          weight: 40), // grow
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 15), // hold
-      TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.35)
-              .chain(CurveTween(curve: Curves.easeInCubic)),
-          weight: 20), // shrink
-      TweenSequenceItem(tween: ConstantTween(0.35), weight: 25), // wait
-    ]).animate(_waveCtrl);
-
+    // Circle 2: opens first (early fade-in), closes together with C3
     _c2Opacity = TweenSequence<double>([
       TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: 1.0), weight: 15), // fade in
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 40), // visible
+          tween: Tween(begin: 0.0, end: 1.0), weight: 10), // fade in (early)
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 40), // ON
       TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.0), weight: 15), // fade out
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 30), // hidden
+          tween: Tween(begin: 1.0, end: 0.0), weight: 10), // fade out TOGETHER
+      TweenSequenceItem(tween: ConstantTween(0.0), weight: 40), // OFF
     ]).animate(_waveCtrl);
 
-    // Circle 3: biggest — appear after circle 2 closes (bigger wave)
-    _c3Scale = TweenSequence<double>([
-      TweenSequenceItem(tween: ConstantTween(0.35), weight: 42), // wait
-      TweenSequenceItem(
-          tween: Tween(begin: 0.35, end: 1.0)
-              .chain(CurveTween(curve: Curves.easeOutCubic)),
-          weight: 28), // grow
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 10), // hold
-      TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.35)
-              .chain(CurveTween(curve: Curves.easeInCubic)),
-          weight: 20), // shrink
-    ]).animate(_waveCtrl);
-
+    // Circle 3: opens later (delayed fade-in), closes at same time as C2
     _c3Opacity = TweenSequence<double>([
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 38), // hidden
+      TweenSequenceItem(tween: ConstantTween(0.0), weight: 25), // OFF (wait)
       TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: 1.0), weight: 14), // fade in
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 24), // visible
+          tween: Tween(begin: 0.0, end: 1.0), weight: 10), // fade in (late)
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 15), // ON
       TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.0), weight: 24), // fade out
+          tween: Tween(begin: 1.0, end: 0.0), weight: 10), // fade out TOGETHER
+      TweenSequenceItem(tween: ConstantTween(0.0), weight: 40), // OFF
     ]).animate(_waveCtrl);
 
     Future.delayed(const Duration(milliseconds: 80), () {
@@ -425,7 +396,6 @@ class _LoginScreenState extends State<LoginScreen>
       child: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
-          // ── Circle 1 — FIXED, smallest, always visible ──
           Positioned(
             top: -size.width * 0.06,
             right: -size.width * 0.06,
@@ -442,7 +412,8 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
 
-          // ── Circle 2 — animated MEDIUM (wave first) ──
+
+          // Circle 2 — medium (0.62w), opens first — same as parallax_login
           Positioned(
             top: -size.width * 0.16,
             right: -size.width * 0.16,
@@ -450,26 +421,21 @@ class _LoginScreenState extends State<LoginScreen>
               animation: _waveCtrl,
               builder: (_, __) => Opacity(
                 opacity: _c2Opacity.value.clamp(0.0, 1.0),
-                child: Transform.scale(
-                  scale: _c2Scale.value,
-                  alignment: Alignment.topRight,
-                  child: Container(
-                    width: size.width * 0.62,
-                    height: size.width * 0.62,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
+                child: Container(
+                  width: size.width * 0.62,
+                  height: size.width * 0.62,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
                         color: Colors.white.withValues(alpha: 0.20),
-                        width: 1.5,
-                      ),
-                    ),
+                        width: 1.5),
                   ),
                 ),
               ),
             ),
           ),
 
-          // ── Circle 3 — animated BIGGEST (wave second) ──
+          // Circle 3 — biggest (0.90w), opens late — same as parallax_login
           Positioned(
             top: -size.width * 0.28,
             right: -size.width * 0.28,
@@ -477,19 +443,14 @@ class _LoginScreenState extends State<LoginScreen>
               animation: _waveCtrl,
               builder: (_, __) => Opacity(
                 opacity: _c3Opacity.value.clamp(0.0, 1.0),
-                child: Transform.scale(
-                  scale: _c3Scale.value,
-                  alignment: Alignment.topRight,
-                  child: Container(
-                    width: size.width * 0.90,
-                    height: size.width * 0.90,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
+                child: Container(
+                  width: size.width * 0.90,
+                  height: size.width * 0.90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
                         color: Colors.white.withValues(alpha: 0.13),
-                        width: 1.5,
-                      ),
-                    ),
+                        width: 1.5),
                   ),
                 ),
               ),
@@ -674,7 +635,8 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildSignInButton() {
     return GestureDetector(
-      onTap: () => Get.to(() => DashboardScreen()),
+      // onTap: () => Get.to(() => DashboardScreen()),
+      onTap: () => Get.to(() => StationSelectionScreen()),
       child: AnimatedBuilder(
         animation: _shimmerAnim,
         builder: (_, __) => Container(
