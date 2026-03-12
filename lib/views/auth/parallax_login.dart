@@ -1,5 +1,6 @@
 import 'package:avislap/utils/app_colors.dart';
 import 'package:avislap/views/auth/trouble_screen.dart';
+import 'package:avislap/widgets/parallax_hero_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -238,10 +239,7 @@ class _LoginScreenState extends State<LoginScreen>
   late AnimationController _shimmerCtrl;
   late Animation<double> _shimmerAnim;
 
-  // ✅ Fast pulse controller — each circle blinks on/off from fixed position
-  late AnimationController _waveCtrl;
-  late Animation<double> _c2Opacity;
-  late Animation<double> _c3Opacity;
+  // ✅ Wave animation is now inside ParallaxHeroWidget
 
   @override
   void initState() {
@@ -279,31 +277,6 @@ class _LoginScreenState extends State<LoginScreen>
     _shimmerAnim =
         Tween<double>(begin: -1.5, end: 2.5).animate(_shimmerCtrl);
 
-    // ✅ Fast pulse — 1.4s cycle, circles blink on/off from their fixed positions
-    _waveCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2000))
-      ..repeat();
-
-    // Circle 2: opens first (early fade-in), closes together with C3
-    _c2Opacity = TweenSequence<double>([
-      TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: 1.0), weight: 10), // fade in (early)
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 40), // ON
-      TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.0), weight: 10), // fade out TOGETHER
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 40), // OFF
-    ]).animate(_waveCtrl);
-
-    // Circle 3: opens later (delayed fade-in), closes at same time as C2
-    _c3Opacity = TweenSequence<double>([
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 25), // OFF (wait)
-      TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: 1.0), weight: 10), // fade in (late)
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 15), // ON
-      TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.0), weight: 10), // fade out TOGETHER
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 40), // OFF
-    ]).animate(_waveCtrl);
 
     Future.delayed(const Duration(milliseconds: 80), () {
       if (mounted) {
@@ -320,7 +293,6 @@ class _LoginScreenState extends State<LoginScreen>
     _heroCtrl.dispose();
     _formCtrl.dispose();
     _shimmerCtrl.dispose();
-    _waveCtrl.dispose();
     super.dispose();
   }
 
@@ -338,7 +310,19 @@ class _LoginScreenState extends State<LoginScreen>
             opacity: _heroOpacity,
             child: SlideTransition(
               position: _heroSlide,
-              child: _buildHero(size),
+              child: ParallaxHeroWidget(
+                bottomPadding: 180,
+                child: Text(
+                  'Sign in to\nyour Account',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 30.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: -0.8,
+                    height: 1.15,
+                  ),
+                ),
+              ),
             ),
           ),
           Expanded(
@@ -381,148 +365,7 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ── Hero ─────────────────────────────────────────────────
-  Widget _buildHero(Size size) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 180.h),
-      decoration: BoxDecoration(
-        color: _C.blue,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(36.r),
-          bottomRight: Radius.circular(36.r),
-        ),
-      ),
-      child: Stack(
-        clipBehavior: Clip.hardEdge,
-        children: [
-          Positioned(
-            top: -size.width * 0.06,
-            right: -size.width * 0.06,
-            child: Container(
-              width: size.width * 0.38,
-              height: size.width * 0.38,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.30),
-                  width: 1.5,
-                ),
-              ),
-            ),
-          ),
 
-
-          // Circle 2 — medium (0.62w), opens first — same as parallax_login
-          Positioned(
-            top: -size.width * 0.16,
-            right: -size.width * 0.16,
-            child: AnimatedBuilder(
-              animation: _waveCtrl,
-              builder: (_, __) => Opacity(
-                opacity: _c2Opacity.value.clamp(0.0, 1.0),
-                child: Container(
-                  width: size.width * 0.62,
-                  height: size.width * 0.62,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.20),
-                        width: 1.5),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Circle 3 — biggest (0.90w), opens late — same as parallax_login
-          Positioned(
-            top: -size.width * 0.28,
-            right: -size.width * 0.28,
-            child: AnimatedBuilder(
-              animation: _waveCtrl,
-              builder: (_, __) => Opacity(
-                opacity: _c3Opacity.value.clamp(0.0, 1.0),
-                child: Container(
-                  width: size.width * 0.90,
-                  height: size.width * 0.90,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.13),
-                        width: 1.5),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // ── Content ──
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height:25.h),
-                Row(
-                  children: [
-                    _buildHeroMark(),
-                    SizedBox(width: 8.w),
-                    Text(
-                      'Parallax',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Sign in to\nyour Account',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 30.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: -0.8,
-                    height: 1.15,
-                  ),
-                ),
-                SizedBox(height: 32.h),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeroMark() {
-    return SizedBox(
-      height: 18.h,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          _heroBar(18.h, 1.0),
-          SizedBox(width: 3.w),
-          _heroBar(13.h, 0.4),
-          SizedBox(width: 3.w),
-          _heroBar(9.h, 0.15),
-        ],
-      ),
-    );
-  }
-
-  Widget _heroBar(double h, double opacity) => Container(
-    width: 4.w,
-    height: h,
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: opacity),
-      borderRadius: BorderRadius.circular(2.r),
-    ),
-  );
 
   Widget _buildFormItem({required int index, required Widget child}) {
     return FadeTransition(

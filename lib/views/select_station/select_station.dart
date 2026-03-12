@@ -1,4 +1,5 @@
 import 'package:avislap/views/dashboard/dashboard_screen.dart';
+import 'package:avislap/widgets/parallax_hero_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -24,8 +25,7 @@ class StationSelectionScreen extends StatefulWidget {
   State<StationSelectionScreen> createState() => _StationSelectionScreenState();
 }
 
-class _StationSelectionScreenState extends State<StationSelectionScreen>
-    with SingleTickerProviderStateMixin {
+class _StationSelectionScreenState extends State<StationSelectionScreen> {
 
   String? _selectedStation;
   bool _isDropdownOpen = false;
@@ -39,43 +39,13 @@ class _StationSelectionScreenState extends State<StationSelectionScreen>
     'Station E - Gate 20',
   ];
 
-  // ✅ Fast pulse controller — staggered open, simultaneous close
-  late AnimationController _waveCtrl;
-  late Animation<double> _c2Opacity, _c3Opacity;
-
   @override
   void initState() {
     super.initState();
-
-    _waveCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2000))
-      ..repeat();
-
-    // Circle 2 (medium): opens first, closes together with C3
-    _c2Opacity = TweenSequence<double>([
-      TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: 1.0), weight: 10), // fade in (early)
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 40), // ON
-      TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.0), weight: 10), // fade out TOGETHER
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 40), // OFF
-    ]).animate(_waveCtrl);
-
-    // Circle 3 (big): opens later, closes at same time as C2
-    _c3Opacity = TweenSequence<double>([
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 25), // OFF (wait)
-      TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: 1.0), weight: 10), // fade in (late)
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 15), // ON
-      TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.0), weight: 10), // fade out TOGETHER
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 40), // OFF
-    ]).animate(_waveCtrl);
   }
 
   @override
   void dispose() {
-    _waveCtrl.dispose();
     super.dispose();
   }
 
@@ -97,7 +67,44 @@ class _StationSelectionScreenState extends State<StationSelectionScreen>
       body: Column(
         children: [
           // ── Blue Hero ──────────────────────────────────
-          _buildHero(size),
+          ParallaxHeroWidget(
+            bottomPadding: 130,
+            trailingAction: GestureDetector(
+              onTap: () => Get.offAllNamed('/login'),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.30), width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.logout_rounded, color: Colors.white, size: 16.sp),
+                    SizedBox(width: 6.w),
+                    Text('Logout',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      )),
+                  ],
+                ),
+              ),
+            ),
+            child: Text(
+              'Welcome, ${widget.userName}!',
+              style: GoogleFonts.dmSans(
+                fontSize: 30.sp,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: -0.8,
+                height: 1.15,
+              ),
+            ),
+          ),
 
           // ── White Card ────────────────────────────────
           Transform.translate(
@@ -214,172 +221,7 @@ class _StationSelectionScreenState extends State<StationSelectionScreen>
     );
   }
 
-  // ── Hero ─────────────────────────────────────────────────
-  Widget _buildHero(Size size) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 190.h),
-      decoration: BoxDecoration(
-        color: _C.blue,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(36.r),
-          bottomRight: Radius.circular(36.r),
-        ),
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Circle 1 — small, FIXED (same as parallax_login.dart)
-          Positioned(
-            top: -size.width * 0.09,
-            right: -size.width * 0.09,
-            child: Container(
-              width: size.width * 0.38,
-              height: size.width * 0.38,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.30),
-                  width: 1.5,
-                ),
-              ),
-            ),
-          ),
 
-
-          // Circle 2 — medium (0.62w), opens first — same as parallax_login
-          Positioned(
-            top: -size.width * 0.16,
-            right: -size.width * 0.16,
-            child: AnimatedBuilder(
-              animation: _waveCtrl,
-              builder: (_, __) => Opacity(
-                opacity: _c2Opacity.value.clamp(0.0, 1.0),
-                child: Container(
-                  width: size.width * 0.62,
-                  height: size.width * 0.62,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.20),
-                        width: 1.5),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Circle 3 — biggest (0.90w), opens late — same as parallax_login
-          Positioned(
-            top: -size.width * 0.28,
-            right: -size.width * 0.28,
-            child: AnimatedBuilder(
-              animation: _waveCtrl,
-              builder: (_, __) => Opacity(
-                opacity: _c3Opacity.value.clamp(0.0, 1.0),
-                child: Container(
-                  width: size.width * 0.90,
-                  height: size.width * 0.90,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.13),
-                        width: 1.5),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Content
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 30.h),
-
-                // ✅ Top row: Logo + Logout button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Logo mark + name
-                    Row(
-                      children: [
-                        _buildHeroMark(),
-                        SizedBox(width: 8.w),
-                        Text(
-                          'Parallax',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // ✅ Logout button
-                    GestureDetector(
-                      onTap: () {
-                        // logout logic
-                        Get.offAllNamed('/login');
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 14.w, vertical: 8.h),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.30),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.logout_rounded,
-                              color: Colors.white,
-                              size: 16.sp,
-                            ),
-                            SizedBox(width: 6.w),
-                            Text(
-                              'Logout',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20.h),
-
-                // Welcome heading
-                Text(
-                  'Welcome, ${widget.userName}!',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 30.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: -0.8,
-                    height: 1.15,
-                  ),
-                ),
-                SizedBox(height: 32.h),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ── Station Bottom Sheet ──────────────────────────────────
   Widget _buildStationSheet() {
@@ -451,30 +293,7 @@ class _StationSelectionScreenState extends State<StationSelectionScreen>
     );
   }
 
-  Widget _buildHeroMark() {
-    return SizedBox(
-      height: 18.h,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          _bar(18.h, 1.0),
-          SizedBox(width: 3.w),
-          _bar(13.h, 0.4),
-          SizedBox(width: 3.w),
-          _bar(9.h, 0.15),
-        ],
-      ),
-    );
-  }
 
-  Widget _bar(double h, double opacity) => Container(
-    width: 4.w, height: h,
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: opacity),
-      borderRadius: BorderRadius.circular(2.r),
-    ),
-  );
 
   Widget _buildHomeIndicator() {
     return Padding(
