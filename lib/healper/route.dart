@@ -1,15 +1,18 @@
-import 'package:avislap/views/auth/parallax_login.dart';
-import 'package:avislap/views/home/LAVSafety.dart';
+import 'package:avislap/views/auth/splash_screen.dart';
+import 'package:avislap/views/auth/login_screen.dart';
+import 'package:avislap/views/forms/LAV%20Safety%20Observation/LAVSafety.dart';
+import 'package:avislap/views/forms/LAV%20Safety%20Observation/LavSafetyObservationScreen.dart';
 import 'package:get/get.dart';
 
 import '../views/auth/FlightAnimation.dart';
 import '../views/dashboard/dashboard_screen.dart';
-import '../views/CabinAudit.dart';
+import '../views/forms/Cabin Quality Audit/CabinAudit.dart';
 import '../views/tasks/lav_safety_screen.dart';
-import '../views/cabin_secuirity/cabin_secuirity.dart';
+import '../views/forms/cabin security search/cabin_secuirity.dart';
 
 class RouteHelper {
   static const String splash = '/';
+  static const String login = '/login';
   static const String dashboard = '/dashboard';
   static const String cabinAudit = '/cabin-audit';
   // static const String lavSafety = '/lav-safety';
@@ -24,6 +27,11 @@ class RouteHelper {
       transition: Transition.fadeIn,
     ),
     GetPage(
+      name: login,
+      page: () => const LoginScreen(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
       name: dashboard,
       page: () => const DashboardScreen(),
       transition: Transition.fadeIn,
@@ -35,7 +43,7 @@ class RouteHelper {
     ),
     GetPage(
       name: lavSafety,
-      page: () => LAVSafetyScreen(),
+      page: () => LavSafetyObservationScreen(),
       transition: Transition.rightToLeft,
     ),
     GetPage(

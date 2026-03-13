@@ -1,4 +1,6 @@
-import 'package:avislap/views/CabinAudit.dart';
+import 'package:avislap/utils/app_colors.dart';
+import 'package:avislap/views/forms/Cabin%20Quality%20Audit/CabinAudit.dart';
+import 'package:avislap/views/forms/cabin%20security%20search/training_filter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -182,17 +184,14 @@ class _CabinQualityAuditListScreenState
             ),
           ),
           // ✅ Three dot menu
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert,
-                color: _Colors.primary, size: 22.sp),
-            onSelected: (value) {},
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                  value: 'filter', child: Text('Filter')),
-              const PopupMenuItem(
-                  value: 'export', child: Text('Export')),
-            ],
-          ),
+          IconButton(
+            icon: Icon(Icons.more_vert, color: AppColors.mainAppColor, size: 24.sp),
+            onPressed: () => Get.bottomSheet(
+              const NewSearchSheet(),
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+            ),
+          )
         ],
       ),
     );

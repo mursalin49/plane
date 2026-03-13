@@ -1,9 +1,12 @@
+import 'package:avislap/utils/app_colors.dart';
+import 'package:avislap/views/forms/Cabin%20Quality%20Audit/CabinQualityAuditScreen.dart';
+import 'package:avislap/views/forms/cabin%20security%20search/cabin_secuirity.dart';
+import 'package:avislap/views/forms/cabin%20security%20search/training_filter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// =====================
 // COLORS
 // =====================
 class _Colors {
@@ -15,85 +18,91 @@ class _Colors {
   static const Color dotColor = Color(0xFF9E9E9E);
   static const Color namePrimary = Color(0xFF3D5AFE);
   static const Color divider = Color(0xFFEEEEEE);
-  static const Color completed = Color(0xFF4CAF50);
-  static const Color incomplete = Color(0xFFE53935);
-  static const Color noColor = Color(0xFF4CAF50);
+  static const Color pass = Color(0xFF4CAF50);
+  static const Color fail = Color(0xFFE53935);
+  static const Color newAuditBtn = Color(0xFF3D5AFE);
 }
 
 // =====================
 // MODEL
 // =====================
-class ShiftReportItem {
+class TrainingItem {
   final String id;
   final String observerName;
   final String observerImage;
   final String date;
   final String time;
+  final String gate;
   final String locationImage;
   final String locationImage2;
-  final bool qaCompleted;
-  final bool lavObsCompleted;
-  final bool hasDelays;
+  final bool isPassed;
 
-  ShiftReportItem({
+  TrainingItem({
     required this.id,
     required this.observerName,
     required this.observerImage,
     required this.date,
     required this.time,
+    required this.gate,
     required this.locationImage,
     required this.locationImage2,
-    required this.qaCompleted,
-    required this.lavObsCompleted,
-    required this.hasDelays,
+    required this.isPassed,
   });
 }
 
 // =====================
 // CONTROLLER
 // =====================
-class EndOfShiftController extends GetxController {
-  final RxList<ShiftReportItem> reports = <ShiftReportItem>[].obs;
+class CabinSecurityController extends GetxController {
+  final RxList<TrainingItem> trainings = <TrainingItem>[].obs;
 
   @override
   void onInit() {
     super.onInit();
-    reports.assignAll([
-      ShiftReportItem(
+    trainings.assignAll([
+      TrainingItem(
         id: '1',
         observerName: 'Jane Cooper',
         observerImage: 'assets/images/nirob.jpg',
         date: 'Dec 15, 2024',
         time: '2:30 PM',
+        gate: 'Gate A-12',
         locationImage: 'assets/images/indor.png',
         locationImage2: 'assets/images/window.png',
-        qaCompleted: true,
-        lavObsCompleted: false,
-        hasDelays: false,
+        isPassed: false,
       ),
-      ShiftReportItem(
+      TrainingItem(
         id: '2',
-        observerName: 'Jane Cooper',
+        observerName: 'Kristin Watson',
         observerImage: 'assets/images/mursalin.jpg',
         date: 'Dec 15, 2024',
         time: '2:30 PM',
+        gate: 'Gate A-12',
         locationImage: 'assets/images/indor.png',
         locationImage2: 'assets/images/window.png',
-        qaCompleted: true,
-        lavObsCompleted: false,
-        hasDelays: false,
+        isPassed: false,
       ),
-      ShiftReportItem(
+      TrainingItem(
         id: '3',
-        observerName: 'Jane Cooper',
+        observerName: 'Theresa Webb',
         observerImage: 'assets/images/nirob.jpg',
         date: 'Dec 15, 2024',
         time: '2:30 PM',
+        gate: 'Gate A-12',
         locationImage: 'assets/images/indor.png',
         locationImage2: 'assets/images/window.png',
-        qaCompleted: true,
-        lavObsCompleted: false,
-        hasDelays: false,
+        isPassed: true,
+      ),
+      TrainingItem(
+        id: '4',
+        observerName: 'Guy Hawkins',
+        observerImage: 'assets/images/nirob.jpg',
+        date: 'Dec 15, 2024',
+        time: '2:30 PM',
+        gate: 'Gate A-12',
+        locationImage: 'assets/images/indor.png',
+        locationImage2: 'assets/images/window.png',
+        isPassed: false,
       ),
     ]);
   }
@@ -102,21 +111,22 @@ class EndOfShiftController extends GetxController {
 // =====================
 // SCREEN
 // =====================
-class EndOfShiftReportScreen extends StatefulWidget {
-  const EndOfShiftReportScreen({super.key});
+class CabinSecurityScreen extends StatefulWidget {
+  const CabinSecurityScreen({super.key});
 
   @override
-  State<EndOfShiftReportScreen> createState() =>
-      _EndOfShiftReportScreenState();
+  State<CabinSecurityScreen> createState() =>
+      _CabinSecurityScreenState();
 }
 
-class _EndOfShiftReportScreenState extends State<EndOfShiftReportScreen> {
-  late final EndOfShiftController controller;
+class _CabinSecurityScreenState
+    extends State<CabinSecurityScreen> {
+  late final CabinSecurityController controller;
 
   @override
   void initState() {
     super.initState();
-    controller = Get.put(EndOfShiftController());
+    controller = Get.put(CabinSecurityController());
   }
 
   @override
@@ -136,7 +146,7 @@ class _EndOfShiftReportScreenState extends State<EndOfShiftReportScreen> {
                   children: [
                     _buildSectionHeader(),
                     SizedBox(height: 12.h),
-                    _buildReportList(),
+                    _buildTrainingList(),
                   ],
                 ),
               ),
@@ -156,22 +166,28 @@ class _EndOfShiftReportScreenState extends State<EndOfShiftReportScreen> {
         children: [
           GestureDetector(
             onTap: () => Get.back(),
-            child:
-            Icon(Icons.arrow_back, color: _Colors.primary, size: 22.sp),
+            child: Icon(Icons.arrow_back, color: _Colors.primary, size: 22.sp),
           ),
           Expanded(
             child: Text(
-              'End of shift report',
+              'Cabin Security Search\nTraining',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w600,
                 color: _Colors.primary,
+                height: 1.3,
               ),
             ),
           ),
-          Icon(Icons.add_circle_outline,
-              color: _Colors.primary, size: 24.sp),
+          IconButton(
+            icon: Icon(Icons.more_vert, color: AppColors.mainAppColor, size: 24.sp),
+            onPressed: () => Get.bottomSheet(
+              const NewSearchSheet(),
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+            ),
+          )
         ],
       ),
     );
@@ -180,51 +196,84 @@ class _EndOfShiftReportScreenState extends State<EndOfShiftReportScreen> {
   // ── Section Header ───────────────────────────────────────
   Widget _buildSectionHeader() {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          width: 4.w,
-          height: 22.h,
-          decoration: BoxDecoration(
-            color: _Colors.primary,
-            borderRadius: BorderRadius.circular(2.r),
-          ),
+        Row(
+          children: [
+            Container(
+              width: 4.w,
+              height: 22.h,
+              decoration: BoxDecoration(
+                color: _Colors.primary,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Text(
+              'Past Trainings',
+              style: GoogleFonts.poppins(
+                fontSize: 17.sp,
+                fontWeight: FontWeight.w700,
+                color: _Colors.textDark,
+              ),
+            ),
+          ],
         ),
-        SizedBox(width: 10.w),
-        Text(
-          'Past Reports',
-          style: GoogleFonts.poppins(
-            fontSize: 17.sp,
-            fontWeight: FontWeight.w700,
-            color: _Colors.textDark,
+
+        // ✅ New Audit button
+        GestureDetector(
+          onTap: () {
+            // Need to import CabinAuditScreenS if not already imported
+            Get.to(() => const CabinQualityAuditScreenN());
+          },
+          child: Container(
+            padding:
+            EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: _Colors.newAuditBtn,
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Text(
+              'New Audit',
+              style: GoogleFonts.poppins(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  // ── Report List ──────────────────────────────────────────
-  Widget _buildReportList() {
+  // ── Training List ────────────────────────────────────────
+  Widget _buildTrainingList() {
     return Obx(() {
       return ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: controller.reports.length,
+        itemCount: controller.trainings.length,
         separatorBuilder: (_, __) =>
             Divider(height: 1, color: _Colors.divider),
         itemBuilder: (context, index) {
-          return _buildReportCard(controller.reports[index]);
+          return _buildTrainingCard(controller.trainings[index]);
         },
       );
     });
   }
 
-  // ── Report Card ──────────────────────────────────────────
-  Widget _buildReportCard(ShiftReportItem item) {
-    return Container(
-      color: _Colors.cardBg,
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  // ── Training Card ─────────────────────────────────────────
+  Widget _buildTrainingCard(TrainingItem item) {
+    return GestureDetector(
+      onTap: () {
+        Get.to(() => CabinQualityAuditScreen());
+      },
+      child: Container(
+        color: _Colors.cardBg,
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Avatar with blue border + green dot
           Stack(
@@ -312,33 +361,25 @@ class _EndOfShiftReportScreenState extends State<EndOfShiftReportScreen> {
                 ),
                 SizedBox(height: 8.h),
 
-                // QA status
-                _buildStatusRow(
-                  label: 'QA',
-                  value: item.qaCompleted ? 'Completed' : 'Incomplete',
-                  color: item.qaCompleted
-                      ? _Colors.completed
-                      : _Colors.incomplete,
+                // Gate
+                Text(
+                  item.gate,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: _Colors.textDark,
+                  ),
                 ),
-                SizedBox(height: 5.h),
+                SizedBox(height: 6.h),
 
-                // LAV OBS status
-                _buildStatusRow(
-                  label: 'LAV OBS',
-                  value: item.lavObsCompleted ? 'Completed' : 'Incomplete',
-                  color: item.lavObsCompleted
-                      ? _Colors.completed
-                      : _Colors.incomplete,
-                ),
-                SizedBox(height: 5.h),
-
-                // Delays status
-                _buildStatusRow(
-                  label: 'Delays',
-                  value: item.hasDelays ? 'YES' : 'NO',
-                  color: item.hasDelays
-                      ? _Colors.incomplete
-                      : _Colors.noColor,
+                // ✅ PASS / FAIL status
+                Text(
+                  item.isPassed ? 'PASS' : 'FAIL',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: item.isPassed ? _Colors.pass : _Colors.fail,
+                  ),
                 ),
               ],
             ),
@@ -355,35 +396,7 @@ class _EndOfShiftReportScreenState extends State<EndOfShiftReportScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  // ── Status Row ───────────────────────────────────────────
-  Widget _buildStatusRow({
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Row(
-      children: [
-        Text(
-          '$label : ',
-          style: GoogleFonts.poppins(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w500,
-            color: _Colors.textDark,
-          ),
-        ),
-        Text(
-          value,
-          style: GoogleFonts.poppins(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
-      ],
-    );
+      ) );
   }
 
   // ── Location Image ────────────────────────────────────────

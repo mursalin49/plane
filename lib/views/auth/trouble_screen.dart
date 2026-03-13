@@ -1,6 +1,7 @@
 import 'package:avislap/controllers/login_controller.dart';
-import 'package:avislap/views/auth/ResetPassword.dart';
+import 'package:avislap/views/auth/email_id.dart';
 import 'package:avislap/views/auth/forget.dart';
+import 'package:avislap/views/auth/forget_id.dart';
 import 'package:avislap/widgets/parallax_hero_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -54,7 +55,7 @@ class _TroubleScreenState extends State<TroubleScreen> {
           Expanded(
             child: SingleChildScrollView(
               child: Transform.translate(
-                offset: const Offset(0, -30),
+                offset: const Offset(0, -60),
                 child: Container(
                   margin: EdgeInsets.symmetric(horizontal: 16.w),
                   padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 28.h),
@@ -155,7 +156,16 @@ class _TroubleScreenState extends State<TroubleScreen> {
 
   Widget _buildContinueButton() {
     return GestureDetector(
-      onTap: () => Get.to(() => ForgotPasswordScreen()),
+      onTap: () {
+        final issue = controller.selectedIssue.value;
+        if (issue == 'id_issue') {
+          Get.to(() => const ForgotIdScreen());
+        } else if (issue == 'pass_issue') {
+          Get.to(() => const ForgotPasswordScreen());
+        } else if (issue == 'email_issue') {
+          Get.to(() => const NoEmailAccessScreen());
+        }
+      },
       child: Container(
         height: 54.h,
         width: double.infinity,

@@ -1,4 +1,5 @@
-import 'package:avislap/views/home/LAVSafety.dart';
+
+import 'package:avislap/views/forms/LAV%20Safety%20Observation/LAVSafety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -187,7 +188,7 @@ class _LavSafetyObservationScreenState
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => LAVSafetyScreen(),
+                  builder: (context) => LavSafetyObservation(),
                 ),
               );
             },
@@ -245,7 +246,7 @@ class _LavSafetyObservationScreenState
   Widget _buildObservationCard(ObservationItem item) {
     return GestureDetector(
       onTap: () {
-        Get.to(() => LAVSafetyScreen());
+        Get.to(() => LavSafetyObservationScreen());
       },
       child: Container(
         color: _Colors.cardBg,

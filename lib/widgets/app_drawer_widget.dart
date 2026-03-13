@@ -1,12 +1,13 @@
-import 'package:avislap/views/cabin_secuirity/CabinSecurityTrainingScreen.dart';
-import 'package:avislap/views/extra/CabinQualityAuditList.dart';
+
+import 'package:avislap/views/forms/Cabin%20Quality%20Audit/CabinQualityAuditList.dart';
+import 'package:avislap/views/forms/LAV%20Safety%20Observation/LavSafetyObservationScreen.dart';
+import 'package:avislap/views/forms/cabin%20security%20search/CabinSecurityTrainingScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:avislap/views/extra/LavSafetyObservationScreen.dart';
-import 'package:avislap/views/CabinAudit.dart';
-import 'package:avislap/views/cabin_secuirity/cabin_secuirity.dart';
+
+
 
 // MODELS
 // =====================

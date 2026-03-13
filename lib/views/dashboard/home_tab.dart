@@ -1,10 +1,13 @@
-import 'package:avislap/views/dashboard/app_drawer_widget.dart';
-import 'package:avislap/views/home/LAVSafety.dart';
+
+
+import 'package:avislap/views/forms/LAV%20Safety%20Observation/LAVSafety.dart';
+import 'package:avislap/views/forms/LAV%20Safety%20Observation/LavSafetyObservationScreen.dart';
+import 'package:avislap/widgets/app_drawer_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
-import '../CabinAudit.dart';
-import '../cabin_secuirity/cabin_secuirity.dart';
+import '../forms/Cabin Quality Audit/CabinAudit.dart';
+import '../forms/cabin security search/cabin_secuirity.dart';
 
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
@@ -43,7 +46,7 @@ class HomeTab extends StatelessWidget {
                   _TasksSection(
                     toComplete: tasksToComplete,
                     onCabinAudit: () => Get.to(() => CabinAuditScreen()),
-                    onLavSafety: () => Get.to(() => LAVSafetyScreen()),
+                    onLavSafety: () => Get.to(() => LavSafetyObservationScreen()),
                     onCabinSecurity: () =>
                         Get.to(() => const CabinQualityAuditScreenN()),
                   ),
