@@ -59,7 +59,7 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
         children: [
           // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
-            bottomPadding: 200,
+            bottomPadding: 230,
             child: Text(
               'OTP Verification',
               style: GoogleFonts.dmSans(
@@ -74,7 +74,7 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
           // ── White Card ────────────────────────────────
           Expanded(
             child: Transform.translate(
-              offset: const Offset(0, -100),
+              offset: const Offset(0, -150),
               child: Container(
                 margin: EdgeInsets.symmetric(horizontal: 16.w),
                 padding: EdgeInsets.fromLTRB(24.w, 40.h, 24.w, 36.h),

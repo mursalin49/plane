@@ -1,547 +1,356 @@
 import 'dart:io';
+import 'package:avislap/utils/app_colors.dart';
+import 'package:avislap/utils/app_icons.dart';
+import 'package:avislap/utils/app_text.dart';
+import 'package:avislap/widgets/app_dropdown.dart';
+import 'package:avislap/widgets/report_submit_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'LavSafetyObservationScreen.dart';
 import 'package:image_picker/image_picker.dart';
 
-// ─────────────────────────────────────────────
-// COLORS
-// ─────────────────────────────────────────────
-class _C {
-  static const Color primary = Color(0xFF3D5AFE);
-  static const Color bg      = Color(0xFFFFFFFF);
-  static const Color dark    = Color(0xFF1A1A2E);
-  static const Color grey    = Color(0xFF8891A4);
-  static const Color border  = Color(0xFFE4E7EF);
-  static const Color inputBg = Color(0xFFF9FAFB);
-  static const Color green   = Color(0xFF22C55E);
-  static const Color red     = Color(0xFFEF4444);
-}
-
-// ─────────────────────────────────────────────
-// MODEL — checklist item
-// ─────────────────────────────────────────────
-class ChecklistItem {
-  final String title;
-  final String? subtitle;
-  ChecklistItem({required this.title, this.subtitle});
-}
-
-// ─────────────────────────────────────────────
-// CONTROLLER
-// ─────────────────────────────────────────────
-class LavSafetyController extends GetxController {
-  final selectedShip = 'Boeing 757-300 (75Y)'.obs;
-  final selectedGate = 'Gate a-2'.obs;
-
-  final List<String> shipOptions = [
-    'Boeing 757-300 (75Y)',
-    'Boeing 737-800',
-    'Airbus A320',
-  ];
-  final List<String> gateOptions = [
-    'Gate a-2',
-    'Gate a-3',
-    'Gate b-1',
-    'Gate b-2',
-  ];
-
-  // checklist items
-  final List<ChecklistItem> checklistItems = [
-    ChecklistItem(title: 'Used Chocks'),
-    ChecklistItem(
-      title: 'Safety Stop',
-      subtitle:
-      'Checking if breaks are functional before approaching to aircraft',
-    ),
-    ChecklistItem(
-      title: 'Used Guide Cone',
-      subtitle:
-      'Placing guide code near panel before reversing LAV truck near aircraft',
-    ),
-    ChecklistItem(title: 'Proper PPE'),
-    ChecklistItem(title: 'Vehicle Inspection'),
-    ChecklistItem(title: 'Spill Prevention'),
-  ];
-
-  // status per item index: 'pass' | 'fail' | 'na' | ''
-  late final List<RxString> statuses;
-  // images per item
-  late final List<RxList<File>> images;
-
+class LAVSafetyScreen extends StatefulWidget {
   @override
-  void onInit() {
-    super.onInit();
-    statuses =
-        List.generate(checklistItems.length, (_) => ''.obs);
-    images = List.generate(
-        checklistItems.length, (_) => <File>[].obs);
-  }
+  State<LAVSafetyScreen> createState() => _LAVSafetyScreenState();
 }
 
-// ─────────────────────────────────────────────
-// SCREEN
-// ─────────────────────────────────────────────
-class LavSafetyObservation extends StatefulWidget {
-  const LavSafetyObservation({super.key});
-  @override
-  State<LavSafetyObservation> createState() =>
-      _LavSafetyObservationScreenState();
-}
-
-class _LavSafetyObservationScreenState
-    extends State<LavSafetyObservation> {
-  final _ctrl             = Get.put(LavSafetyController());
-  final _supervisorCtrl   = TextEditingController();
-  final _driverCtrl       = TextEditingController();
-  final _otherFindingsCtrl= TextEditingController();
-  final _additionalCtrl   = TextEditingController();
-  final _picker           = ImagePicker();
-
+class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
+  // ── step: 0 = Job Details, 1 = Checklist, 2 = Notes/Submit
   int _step = 0;
 
-  final RxList<File> _step2Images = <File>[].obs;
+  // ── Step 0 fields
+  final _supervisorCtrl = TextEditingController();
+  final _driverCtrl     = TextEditingController();
+  final _shipCtrl       = TextEditingController();
+  String _selectedGate  = 'Please Select One';
 
-  static String _todayDate() {
-    final n = DateTime.now();
-    return '${n.month.toString().padLeft(2, '0')}/'
-        '${n.day.toString().padLeft(2, '0')}/${n.year}';
+  // ── Step 1 — checklist
+  final Map<String, String?> _selectedValues = {};
+  final Map<String, List<File>> _uploadedImages = {};
+  final ImagePicker _picker = ImagePicker();
+
+  // ── Step 2 — notes + pictures
+  final _otherFindingsCtrl = TextEditingController();
+  final _additionalCtrl    = TextEditingController();
+  final List<File> _step2Images = [];
+
+  static const double _cardRadius  = 16;
+  static const double _inputRadius = 12;
+
+  // ─────────────────────────────────────────────
+  static String _formatCurrentDate() {
+    final now = DateTime.now();
+    return '${now.month.toString().padLeft(2, '0')}/'
+        '${now.day.toString().padLeft(2, '0')}/${now.year}';
   }
 
-  Future<void> _pickImagesFor(int idx) async {
-    final picked = await _picker.pickMultiImage();
-    if (picked.isNotEmpty) {
-      _ctrl.images[idx]
-          .addAll(picked.map((x) => File(x.path)));
+  Future<void> _pickImagesFor(String key) async {
+    final List<XFile> images = await _picker.pickMultiImage();
+    if (images.isNotEmpty) {
+      setState(() {
+        _uploadedImages[key] = [
+          ...(_uploadedImages[key] ?? []),
+          ...images.map((img) => File(img.path)),
+        ];
+      });
     }
   }
 
   Future<void> _pickStep2Images() async {
-    final picked = await _picker.pickMultiImage();
-    if (picked.isNotEmpty) {
-      _step2Images.addAll(picked.map((x) => File(x.path)));
+    final List<XFile> images = await _picker.pickMultiImage();
+    if (images.isNotEmpty) {
+      setState(() {
+        _step2Images.addAll(images.map((img) => File(img.path)));
+      });
     }
   }
 
+  // ─────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _C.bg,
-      appBar: _appBar(),
-      body: _step == 0
-          ? _buildStep0()
-          : _step == 1
-          ? _buildStep1()
-          : _buildStep2(),
+      backgroundColor: const Color(0xFFF5F6F8),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: AppColors.mainAppColor,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () =>
+          _step > 0 ? setState(() => _step--) : Navigator.pop(context),
+        ),
+        title: AppText(
+          "LAV Safety Observation",
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline_rounded,
+                color: Colors.white),
+            onPressed: () => _showInstructions(context),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        top: true,
+        child: _step == 0
+            ? _buildStep0()
+            : _step == 1
+            ? _buildStep1()
+            : _buildStep2(),
+      ),
     );
   }
 
-  // ── App Bar ──────────────────────────────────────────────
-  AppBar _appBar() => AppBar(
-    backgroundColor: _C.bg,
-    elevation: 0,
-    surfaceTintColor: Colors.transparent,
-    leading: IconButton(
-      icon: Icon(Icons.arrow_back_rounded,
-          color: _C.primary, size: 22.sp),
-      onPressed: () =>
-      _step > 0 ? setState(() => _step--) : Get.back(),
-    ),
-    title: Text(
-      'LAV Safety Observation',
-      style: GoogleFonts.dmSans(
-        fontSize: 17.sp,
-        fontWeight: FontWeight.w600,
-        color: _C.dark,
-      ),
-    ),
-    centerTitle: true,
-    actions: [
-      IconButton(
-        icon: Icon(Icons.info_outline_rounded,
-            color: _C.dark, size: 22.sp),
-        onPressed: _showInstructions,
-      ),
-    ],
-  );
-
-  // ─────────────────────────────────────────────
+  // ══════════════════════════════════════════════
   // STEP 0 — Job Details
-  // ─────────────────────────────────────────────
+  // ══════════════════════════════════════════════
   Widget _buildStep0() {
     return Column(
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-                20.w, 24.h, 20.w, 20.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: _buildSectionCard(
               children: [
-                // Date and Time
-                _label('Date and Time *'),
-                _pillField(
-                  child: Row(children: [
-                    Expanded(
-                        child: Text(_todayDate(),
-                            style: _fieldStyle())),
-                    Icon(Icons.calendar_month_outlined,
-                        size: 20.sp, color: _C.grey),
-                  ]),
+                _buildRequiredLabel("Date and Time"),
+                _buildReadOnlyDateField(),
+                _buildRequiredLabel("Supervisor/Lead"),
+                _buildTextField(
+                    "Enter supervisor or lead name",
+                    controller: _supervisorCtrl),
+                _buildRequiredLabel("Driver"),
+                _buildTextField(
+                    "Enter Driver's Name",
+                    controller: _driverCtrl),
+                _buildRequiredLabel("Ship"),
+                _buildTextField(
+                    "Enter Ship Number",
+                    controller: _shipCtrl),
+                _buildRequiredLabel("Gate"),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: AppDropdown(
+                    hint: "Please Select One",
+                    items: const [
+                      'Please Select One',
+                      'Gate A1',
+                      'Gate B2',
+                      'Gate C1',
+                      'Gate D2',
+                    ],
+                    value: _selectedGate,
+                  ),
                 ),
-                SizedBox(height: 20.h),
-
-                // Supervisor/Lead
-                _label('Supervisor/Lead *'),
-                _pillTextField(
-                  controller: _supervisorCtrl,
-                  hint: 'John Doe',
-                ),
-                SizedBox(height: 20.h),
-
-                // Driver
-                _label('Driver *'),
-                _pillTextField(
-                  controller: _driverCtrl,
-                  hint: 'Stony Korella',
-                ),
-                SizedBox(height: 20.h),
-
-                // Ship
-                _label('Ship *'),
-                Obx(() => _pillDropdown(
-                  value: _ctrl.selectedShip.value,
-                  items: _ctrl.shipOptions,
-                  onChanged: (v) =>
-                  _ctrl.selectedShip.value = v!,
-                )),
-                SizedBox(height: 20.h),
-
-                // Gate
-                _label('Gate *'),
-                Obx(() => _pillDropdown(
-                  value: _ctrl.selectedGate.value,
-                  items: _ctrl.gateOptions,
-                  onChanged: (v) =>
-                  _ctrl.selectedGate.value = v!,
-                )),
               ],
             ),
           ),
         ),
-        _nextButton(() => setState(() => _step = 1)),
+        _buildNextButton(() => setState(() => _step = 1)),
       ],
     );
   }
 
-  // ─────────────────────────────────────────────
+  // ══════════════════════════════════════════════
   // STEP 1 — Inspection Checklist
-  // ─────────────────────────────────────────────
+  // ══════════════════════════════════════════════
   Widget _buildStep1() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-                20.w, 24.h, 20.w, 20.h),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Inspection Checklist',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w700,
-                    color: _C.primary,
-                  ),
+                // "Inspection Checklist" heading
+                AppText(
+                  "Inspection Checklist",
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.mainAppColor,
                 ),
-                SizedBox(height: 24.h),
-                ...List.generate(
-                  _ctrl.checklistItems.length,
-                      (i) => _checklistCard(i),
+                const SizedBox(height: 20),
+
+                _buildSectionCard(
+                  children: [
+                    _buildAuditRow(
+                      "Used Chocks", "chocks",
+                      showImageUpload: true,
+                    ),
+                    _buildAuditRow(
+                      "Safety Stop", "safety_stop",
+                      subtitle:
+                      "Checking if breaks are functional before approaching to aircraft",
+                      showImageUpload: true,
+                    ),
+                    _buildAuditRow(
+                      "Used Guide Cone", "guide_cone",
+                      subtitle:
+                      "Placing guide code near panel before reversing LAV truck near aircraft",
+                      showImageUpload: true,
+                    ),
+                    _buildAuditRow(
+                      "Face Mask", "mask",
+                      subtitle:
+                      "Was Face Mask used while servicing aircraft?",
+                    ),
+                    _buildAuditRow(
+                      "Gloves", "gloves",
+                      subtitle:
+                      "Was agent using gloves to service?",
+                    ),
+                    _buildAuditRow(
+                      "Shoes", "shoes",
+                      subtitle:
+                      "Was agent wearing proper shoes and clothing?",
+                    ),
+                    _buildAuditRow(
+                      "Dump", "dump",
+                      subtitle: "Was the aircraft Dumped?",
+                    ),
+                    _buildAuditRow(
+                      "Flush", "flush",
+                      subtitle:
+                      "Was the aircraft Flushed with required amount of blue juice?",
+                    ),
+                    _buildAuditRow(
+                      "Fill", "fill",
+                      subtitle:
+                      "Was the Aircraft filled with the required amount of Blue Juice?",
+                    ),
+                    _buildAuditRow(
+                      "360 Walk Around", "walkaround",
+                      subtitle:
+                      "LAV Driver Walks around LAV Truck to make sure the truck is clear to move...",
+                    ),
+                    _buildAuditRow(
+                      "Chock Removal Process", "chock_removal",
+                      subtitle:
+                      "LAV Driver Takes out forward check and drives up 10 feet before coming back...",
+                      isLast: true,
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
         ),
-        _nextButton(() => setState(() => _step = 2)),
+        _buildNextButton(() => setState(() => _step = 2)),
       ],
     );
   }
 
-  Widget _checklistCard(int idx) {
-    final item = _ctrl.checklistItems[idx];
-    return Padding(
-      padding: EdgeInsets.only(bottom: 24.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title (primary color + asterisk)
-          RichText(
-            text: TextSpan(
-              text: item.title,
-              style: GoogleFonts.dmSans(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: _C.primary,
-              ),
-              children: [
-                TextSpan(
-                  text: ' *',
-                  style: TextStyle(color: _C.red),
-                ),
-              ],
-            ),
-          ),
-
-          // Subtitle if present
-          if (item.subtitle != null) ...[
-            SizedBox(height: 4.h),
-            Text(
-              item.subtitle!,
-              style: GoogleFonts.dmSans(
-                fontSize: 12.sp,
-                color: _C.grey,
-                height: 1.4,
-              ),
-            ),
-          ],
-          SizedBox(height: 10.h),
-
-          // Pass / Fail / N/A
-          Obx(() {
-            final status = _ctrl.statuses[idx].value;
-            return Row(
-              children: [
-                Expanded(
-                  child: _statusBtn(
-                    label: 'Pass',
-                    icon: Icons.check,
-                    selected: status == 'pass',
-                    activeColor: _C.green,
-                    onTap: () =>
-                    _ctrl.statuses[idx].value = 'pass',
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: _statusBtn(
-                    label: 'Fail',
-                    icon: Icons.close,
-                    selected: status == 'fail',
-                    activeColor: _C.red,
-                    onTap: () =>
-                    _ctrl.statuses[idx].value = 'fail',
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: _statusBtn(
-                    label: 'N/A',
-                    icon: null,
-                    selected: status == 'na',
-                    activeColor: _C.primary,
-                    onTap: () =>
-                    _ctrl.statuses[idx].value = 'na',
-                  ),
-                ),
-              ],
-            );
-          }),
-          SizedBox(height: 10.h),
-
-          // Upload an image
-          GestureDetector(
-            onTap: () => _pickImagesFor(idx),
-            child: Container(
-              height: 48.h,
-              decoration: BoxDecoration(
-                color: _C.bg,
-                borderRadius: BorderRadius.circular(30.r),
-                border: Border.all(color: _C.border),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.cloud_upload_outlined,
-                      size: 18.sp, color: _C.grey),
-                  SizedBox(width: 8.w),
-                  Text('Upload an image',
-                      style: GoogleFonts.dmSans(
-                          fontSize: 14.sp,
-                          color: _C.grey)),
-                ],
-              ),
-            ),
-          ),
-
-          // Thumbnails
-          Obx(() => _ctrl.images[idx].isEmpty
-              ? const SizedBox.shrink()
-              : Padding(
-            padding: EdgeInsets.only(top: 10.h),
-            child: SizedBox(
-              height: 72.h,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _ctrl.images[idx].length,
-                itemBuilder: (_, j) => Stack(
-                  children: [
-                    Container(
-                      width: 64.w,
-                      height: 64.h,
-                      margin: EdgeInsets.only(right: 8.w),
-                      decoration: BoxDecoration(
-                        borderRadius:
-                        BorderRadius.circular(8.r),
-                        border: Border.all(
-                            color: _C.border),
-                      ),
-                      child: ClipRRect(
-                        borderRadius:
-                        BorderRadius.circular(8.r),
-                        child: Image.file(
-                            _ctrl.images[idx][j],
-                            fit: BoxFit.cover),
-                      ),
-                    ),
-                    Positioned(
-                      top: 2, right: 10,
-                      child: GestureDetector(
-                        onTap: () => _ctrl.images[idx]
-                            .removeAt(j),
-                        child: Container(
-                          padding: EdgeInsets.all(2.r),
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.close,
-                              color: Colors.white,
-                              size: 12.sp),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          )),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
+  // ══════════════════════════════════════════════
   // STEP 2 — Other Findings + Notes + Pictures
-  // ─────────────────────────────────────────────
+  // ══════════════════════════════════════════════
   Widget _buildStep2() {
     return Column(
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-                20.w, 24.h, 20.w, 20.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: _buildSectionCard(
               children: [
-                // Other Findings
-                _label('Other Findings'),
-                _multilineField(
+                _buildNoteField(
+                  "Other Findings",
+                  "Enter any additional findings or notes...",
                   controller: _otherFindingsCtrl,
-                  hint:
-                  'Enter any additional findings or notes...',
                 ),
-                SizedBox(height: 20.h),
-
-                // Additional Notes
-                _label('Additional Notes'),
-                _multilineField(
+                _buildNoteField(
+                  "Additional Notes",
+                  "Enter any additional findings or notes...",
                   controller: _additionalCtrl,
-                  hint:
-                  'Enter any additional findings or notes...',
                 ),
-                SizedBox(height: 20.h),
-
-                // Pictures
-                _label('Pictures'),
+                const SizedBox(height: 4),
+                AppText(
+                  "Pictures",
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.mainAppColor,
+                ),
+                const SizedBox(height: 8),
                 GestureDetector(
                   onTap: _pickStep2Images,
-                  child: Container(
-                    height: 48.h,
-                    decoration: BoxDecoration(
-                      color: _C.bg,
-                      borderRadius:
-                      BorderRadius.circular(30.r),
-                      border: Border.all(color: _C.border),
-                    ),
-                    child: Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.cloud_upload_outlined,
-                            size: 18.sp, color: _C.grey),
-                        SizedBox(width: 8.w),
-                        Text('Upload an image',
-                            style: GoogleFonts.dmSans(
-                                fontSize: 14.sp,
-                                color: _C.grey)),
-                      ],
-                    ),
-                  ),
+                  child: _buildUploadBox(),
                 ),
-                SizedBox(height: 12.h),
-
-                // Step2 thumbnails
-                Obx(() => _step2Images.isEmpty
-                    ? const SizedBox.shrink()
-                    : Wrap(
-                  spacing: 8.w,
-                  runSpacing: 8.h,
-                  children: List.generate(
-                    _step2Images.length,
-                        (i) => Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius:
-                          BorderRadius.circular(8.r),
-                          child: Image.file(
-                            _step2Images[i],
-                            width: 80.w,
-                            height: 80.w,
-                            fit: BoxFit.cover,
+                if (_step2Images.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _step2Images.map((file) {
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius:
+                            BorderRadius.circular(8),
+                            child: Image.file(file,
+                                width: 72,
+                                height: 72,
+                                fit: BoxFit.cover),
                           ),
-                        ),
-                        Positioned(
-                          top: 4, right: 4,
-                          child: GestureDetector(
-                            onTap: () => _step2Images
-                                .removeAt(i),
-                            child: Container(
-                              padding:
-                              EdgeInsets.all(2.r),
-                              decoration:
-                              const BoxDecoration(
-                                color: Colors.black54,
-                                shape: BoxShape.circle,
+                          Positioned(
+                            top: 3, right: 3,
+                            child: GestureDetector(
+                              onTap: () => setState(
+                                      () => _step2Images
+                                      .remove(file)),
+                              child: Container(
+                                padding:
+                                const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 13),
                               ),
-                              child: Icon(Icons.close,
-                                  color: Colors.white,
-                                  size: 14.sp),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      );
+                    }).toList(),
                   ),
-                )),
+                ],
               ],
             ),
           ),
         ),
-        _submitButton(),
+
+        // Submit button
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+          child: SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: () {
+                Get.snackbar("Success", "LAV Safety Report Sent Successfully",
+                    snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+                Get.off(() => const LavSafetyObservationScreen());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.mainAppColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(_inputRadius),
+                ),
+              ),
+              child: const Text(
+                "Send Report",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -550,276 +359,455 @@ class _LavSafetyObservationScreenState
   // SHARED WIDGETS
   // ─────────────────────────────────────────────
 
-  // Status button (Pass / Fail / N/A)
-  Widget _statusBtn({
-    required String label,
-    required IconData? icon,
-    required bool selected,
-    required Color activeColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        height: 44.h,
-        decoration: BoxDecoration(
-          color: selected ? activeColor : _C.bg,
-          borderRadius: BorderRadius.circular(22.r),
-          border: Border.all(
-            color: selected ? activeColor : _C.border,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Icon(icon,
-                  size: 16.sp,
-                  color: selected ? Colors.white : _C.grey),
-              SizedBox(width: 4.w),
-            ],
-            Text(
-              label,
-              style: GoogleFonts.dmSans(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: selected ? Colors.white : _C.grey,
-              ),
+  Widget _buildAuditRow(
+      String title,
+      String key, {
+        String? subtitle,
+        bool showImageUpload = false,
+        bool isLast = false,
+      }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildRequiredLabel(title),
+          if (subtitle != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: AppText(subtitle,
+                  fontSize: 13, color: AppColors.grey),
             ),
+          ] else
+            const SizedBox(height: 8),
+
+          // Pass / Fail / N/A — 3 buttons
+          Row(
+            children: [
+              _auditChip(key, "Pass", AppIcons.correct,
+                  AppColors.green),
+              const SizedBox(width: 8),
+              _auditChip(
+                  key, "Fail", AppIcons.cancel, AppColors.red),
+              const SizedBox(width: 8),
+              _auditChipNA(key),
+            ],
+          ),
+
+          if (showImageUpload) ...[
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () => _pickImagesFor(key),
+              child: _buildUploadBox(),
+            ),
+            // thumbnails
+            if ((_uploadedImages[key] ?? []).isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: (_uploadedImages[key] ?? []).map((file) {
+                  return Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(file,
+                            width: 64,
+                            height: 64,
+                            fit: BoxFit.cover),
+                      ),
+                      Positioned(
+                        top: 2, right: 2,
+                        child: GestureDetector(
+                          onTap: () => setState(() =>
+                              _uploadedImages[key]!.remove(file)),
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close,
+                                color: Colors.white, size: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ],
           ],
+        ],
+      ),
+    );
+  }
+
+  // Pass / Fail chip (with svg icon)
+  Widget _auditChip(
+      String key, String value, String svgIcon, Color color) {
+    bool isSelected = _selectedValues[key] == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () =>
+            setState(() => _selectedValues[key] = value),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? color.withValues(alpha: 0.12)
+                : const Color(0xFFF9FAFB),
+            borderRadius:
+            BorderRadius.circular(_inputRadius),
+            border: Border.all(
+              color: isSelected ? color : AppColors.border,
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SvgPicture.asset(
+                svgIcon,
+                width: 16,
+                height: 16,
+                colorFilter: ColorFilter.mode(
+                  isSelected ? color : AppColors.grey,
+                  BlendMode.srcIn,
+                ),
+              ),
+              const SizedBox(width: 5),
+              AppText(
+                value,
+                fontSize: 13,
+                fontWeight: isSelected
+                    ? FontWeight.w600
+                    : FontWeight.w500,
+                color: isSelected
+                    ? color
+                    : AppColors.from_heading,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _label(String t) => Padding(
-    padding: EdgeInsets.only(bottom: 8.h),
-    child: Text(t,
-        style: GoogleFonts.dmSans(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: _C.primary)),
-  );
-
-  TextStyle _fieldStyle() =>
-      GoogleFonts.dmSans(fontSize: 15.sp, color: _C.dark);
-
-  Widget _pillField({required Widget child}) => Container(
-    padding: EdgeInsets.symmetric(
-        horizontal: 16.w, vertical: 14.h),
-    decoration: BoxDecoration(
-      color: _C.bg,
-      borderRadius: BorderRadius.circular(30.r),
-      border: Border.all(color: _C.border),
-    ),
-    child: child,
-  );
-
-  Widget _pillTextField({
-    required TextEditingController controller,
-    required String hint,
-  }) =>
-      TextField(
-        controller: controller,
-        style: _fieldStyle(),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.dmSans(
-              fontSize: 15.sp, color: _C.grey),
-          filled: true,
-          fillColor: _C.bg,
-          contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w, vertical: 14.h),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30.r),
-            borderSide: BorderSide(color: _C.border),
+  // N/A chip (no icon)
+  Widget _auditChipNA(String key) {
+    final isSelected = _selectedValues[key] == 'N/A';
+    return Expanded(
+      child: GestureDetector(
+        onTap: () =>
+            setState(() => _selectedValues[key] = 'N/A'),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.mainAppColor.withValues(alpha: 0.12)
+                : const Color(0xFFF9FAFB),
+            borderRadius:
+            BorderRadius.circular(_inputRadius),
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.mainAppColor
+                  : AppColors.border,
+              width: isSelected ? 1.5 : 1,
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30.r),
-            borderSide: BorderSide(color: _C.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30.r),
-            borderSide:
-            BorderSide(color: _C.primary, width: 1.5),
-          ),
-        ),
-      );
-
-  Widget _pillDropdown({
-    required String value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) =>
-      Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        decoration: BoxDecoration(
-          color: _C.bg,
-          borderRadius: BorderRadius.circular(30.r),
-          border: Border.all(color: _C.border),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: value,
-            isExpanded: true,
-            icon: Icon(Icons.keyboard_arrow_down_rounded,
-                color: _C.grey, size: 20.sp),
-            style: _fieldStyle(),
-            items: items
-                .map((i) => DropdownMenuItem(
-                value: i, child: Text(i)))
-                .toList(),
-            onChanged: onChanged,
-          ),
-        ),
-      );
-
-  Widget _multilineField({
-    required TextEditingController controller,
-    required String hint,
-  }) =>
-      TextField(
-        controller: controller,
-        maxLines: 5,
-        style: _fieldStyle(),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.dmSans(
-              fontSize: 14.sp, color: _C.grey),
-          filled: true,
-          fillColor: _C.bg,
-          contentPadding: EdgeInsets.all(16.w),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14.r),
-            borderSide: BorderSide(color: _C.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14.r),
-            borderSide: BorderSide(color: _C.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14.r),
-            borderSide:
-            BorderSide(color: _C.primary, width: 1.5),
-          ),
-        ),
-      );
-
-  Widget _nextButton(VoidCallback onTap) => Container(
-    color: _C.bg,
-    padding: EdgeInsets.fromLTRB(
-        20.w, 12.h, 20.w, 28.h),
-    child: GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 52.h,
-        decoration: BoxDecoration(
-          color: _C.primary,
-          borderRadius: BorderRadius.circular(30.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'NEXT',
-          style: GoogleFonts.dmSans(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: 1.2,
+          child: Center(
+            child: AppText(
+              'N/A',
+              fontSize: 13,
+              fontWeight: isSelected
+                  ? FontWeight.w600
+                  : FontWeight.w500,
+              color: isSelected
+                  ? AppColors.mainAppColor
+                  : AppColors.from_heading,
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _submitButton() => Container(
-    color: _C.bg,
-    padding: EdgeInsets.fromLTRB(
-        20.w, 12.h, 20.w, 28.h),
-    child: GestureDetector(
-      onTap: () {
-        Get.snackbar(
-          'Success',
-          'LAV Safety Observation submitted!',
-          backgroundColor: _C.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
-        Get.back();
-      },
-      child: Container(
-        height: 52.h,
-        decoration: BoxDecoration(
-          color: _C.primary,
-          borderRadius: BorderRadius.circular(30.r),
+  Widget _buildRequiredLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppText(text,
+              fontWeight: FontWeight.w600,
+              color: AppColors.mainAppColor,
+              fontSize: 14),
+          const Text(" *",
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.red,
+                  fontSize: 16)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyDateField() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: 14, vertical: 14),
+      margin: const EdgeInsets.only(bottom: 16),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _formatCurrentDate(),
+              style: TextStyle(
+                  color: AppColors.dark, fontSize: 15),
+            ),
+          ),
+          Icon(Icons.calendar_month_outlined,
+              color: AppColors.grey, size: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard(
+      {String? title, required List<Widget> children}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(_cardRadius),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null && title.isNotEmpty) ...[
+            AppText(title,
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: AppColors.dark),
+            const SizedBox(height: 16),
+          ],
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField(String hint,
+      {TextEditingController? controller}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+              color: AppColors.from_heading
+                  .withValues(alpha: 0.8)),
+          filled: true,
+          fillColor: const Color(0xFFF9FAFB),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide(
+                color: AppColors.mainAppColor, width: 1.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16, vertical: 14),
         ),
-        alignment: Alignment.center,
-        child: Text(
-          'NEXT',
-          style: GoogleFonts.dmSans(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  Widget _buildNoteField(String label, String hint,
+      {TextEditingController? controller}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppText(label,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.mainAppColor),
+          const SizedBox(height: 6),
+          TextField(
+            controller: controller,
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(
+                  color: AppColors.from_heading
+                      .withValues(alpha: 0.8)),
+              filled: true,
+              fillColor: const Color(0xFFF9FAFB),
+              border: OutlineInputBorder(
+                borderRadius:
+                BorderRadius.circular(_inputRadius),
+                borderSide:
+                BorderSide(color: AppColors.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius:
+                BorderRadius.circular(_inputRadius),
+                borderSide:
+                BorderSide(color: AppColors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius:
+                BorderRadius.circular(_inputRadius),
+                borderSide: BorderSide(
+                    color: AppColors.mainAppColor,
+                    width: 1.5),
+              ),
+              contentPadding: const EdgeInsets.all(16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUploadBox() {
+    return Container(
+      width: double.infinity,
+      height: 50,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.cloud_upload_outlined,
+              color: AppColors.grey, size: 20),
+          const SizedBox(width: 8),
+          Text("Upload an image",
+              style: TextStyle(
+                  color: AppColors.grey, fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNextButton(VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          height: 52,
+          decoration: BoxDecoration(
+            color: AppColors.mainAppColor,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            'NEXT',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: 1.2,
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
-  void _showInstructions() {
+  void _showInstructions(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r)),
-        title: Row(children: [
-          Icon(Icons.info_outline_rounded,
-              color: _C.primary, size: 22.sp),
-          SizedBox(width: 8.w),
-          Text('Instructions',
-              style: GoogleFonts.dmSans(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600)),
-        ]),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.info_outline_rounded,
+                color: AppColors.mainAppColor, size: 26),
+            const SizedBox(width: 10),
+            Text(
+              "Instructions",
+              style: TextStyle(
+                color: AppColors.mainAppColor,
+                fontWeight: FontWeight.w500,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Conduct the LAV Audit as you observe the Drivers, don\'t wait till the end of the shift to submit.',
-              style: GoogleFonts.dmSans(
-                  fontSize: 13.sp,
-                  color: _C.dark,
+              style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.dark,
                   height: 1.5),
             ),
-            SizedBox(height: 10.h),
+            const SizedBox(height: 10),
             Text(
               'Please submit this with as much detail as possible 2 Observations per Shift',
-              style: GoogleFonts.dmSans(
-                  fontSize: 13.sp,
-                  color: _C.dark,
+              style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.dark,
                   height: 1.5),
             ),
-            SizedBox(height: 10.h),
+            const SizedBox(height: 10),
             Text(
               'Take pictures of the Driver following the proper procedures.',
-              style: GoogleFonts.dmSans(
-                  fontSize: 13.sp,
-                  color: _C.primary,
-                  height: 1.5,
-                  decoration: TextDecoration.underline),
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.mainAppColor,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Got it',
-                style: GoogleFonts.dmSans(
-                    fontWeight: FontWeight.w600,
-                    color: _C.primary)),
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "OK",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.mainAppColor,
+              ),
+            ),
           ),
         ],
       ),

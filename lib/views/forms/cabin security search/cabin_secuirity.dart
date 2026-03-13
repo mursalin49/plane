@@ -1567,7 +1567,7 @@ class _CabinQualityAuditScreenNState
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
-        Get.offAll(() => const CabinSecurityScreen());
+        Get.off(() => const CabinSecurityScreen());
       },
       child: Container(
         height: 52.h,

@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen>
             child: SlideTransition(
               position: _heroSlide,
               child: ParallaxHeroWidget(
-                bottomPadding: 180,
+                bottomPadding: 220,
                 child: Text(
                   'Sign in to\nyour Account',
                   style: GoogleFonts.dmSans(
@@ -127,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen>
           Expanded(
             child: SingleChildScrollView(
               child: Transform.translate(
-                offset: const Offset(0, -150),
+                offset: const Offset(0, -180),
                 child: Container(
                   margin: EdgeInsets.symmetric(horizontal: 16.w),
                   padding: EdgeInsets.fromLTRB(24.w, 28.h, 24.w, 28.h),
@@ -215,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             SizedBox(width: 8.w),
             Text('Remember me',
-                style: GoogleFonts.dmSans(fontSize: 13.sp, color: AppColors.mainAppColor)),
+                style: GoogleFonts.dmSans(fontSize: 13.sp, color: AppColors.mainAppColor,fontWeight: FontWeight.w600)),
           ],
         ),
         GestureDetector(
@@ -224,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen>
               style: GoogleFonts.dmSans(
                   fontSize: 13.sp,
                   color: _C.blue,
-                  fontWeight: FontWeight.w500)),
+                  fontWeight: FontWeight.w600)),
         ),
       ],
     );

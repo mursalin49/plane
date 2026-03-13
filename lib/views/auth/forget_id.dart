@@ -36,7 +36,7 @@ class _ForgotPasswordScreenState extends State<ForgotIdScreen> {
         children: [
           // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
-            bottomPadding: 120,
+            bottomPadding: 200,
             child: Text(
               'Forget ID',
               style: GoogleFonts.dmSans(
@@ -53,7 +53,7 @@ class _ForgotPasswordScreenState extends State<ForgotIdScreen> {
           Expanded(
             child: SingleChildScrollView(
               child: Transform.translate(
-                offset: const Offset(0, -50),
+                offset: const Offset(0, -130),
                 child: Container(
                   margin: EdgeInsets.symmetric(horizontal: 16.w),
                   padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 28.h),

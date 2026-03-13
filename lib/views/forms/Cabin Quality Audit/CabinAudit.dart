@@ -1533,8 +1533,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
-        Get.offAll(
-                () => const CabinQualityAuditListScreen());
+        Get.off(() => const CabinQualityAuditListScreen());
       },
       child: Container(
         height: 52.h,

@@ -68,7 +68,7 @@ class _StationSelectionScreenState extends State<StationSelectionScreen> {
         children: [
           // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
-            bottomPadding: 130,
+            bottomPadding: 220,
             trailingAction: GestureDetector(
               onTap: () => Get.offAllNamed('/login'),
               child: Container(
@@ -108,7 +108,7 @@ class _StationSelectionScreenState extends State<StationSelectionScreen> {
 
           // ── White Card ────────────────────────────────
           Transform.translate(
-            offset: const Offset(0, -60),
+            offset: const Offset(0, -90),
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: 16.w),
               padding: EdgeInsets.fromLTRB(20.w, 22.h, 20.w, 30.h),

@@ -5,7 +5,6 @@ import 'package:motion_tab_bar/MotionTabBar.dart';
 import 'package:motion_tab_bar/MotionTabBarController.dart';
 import '../../utils/app_colors.dart';
 import 'home_tab.dart';
-import 'chat_tab.dart';
 import 'history_tab.dart';
 import 'profile_tab.dart';
 

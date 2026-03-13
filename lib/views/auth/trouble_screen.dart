@@ -9,8 +9,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class _C {
-  static const Color blue = Color(0xFF3D5AFE);
-  static const Color ink = Color(0xFF0E0E10);
+  static const Color blue  = Color(0xFF3D5AFE);
+  static const Color ink   = Color(0xFF0E0E10);
   static const Color white = Color(0xFFFFFFFF);
 }
 
@@ -25,87 +25,110 @@ class _TroubleScreenState extends State<TroubleScreen> {
   final controller = Get.put(AuthController());
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FF),
       body: Column(
         children: [
-          ParallaxHeroWidget(
-            child: Text(
-              'Having Trouble\nSigning in?',
-              style: GoogleFonts.dmSans(
-                fontSize: 30.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: -0.8,
-                height: 1.15,
-              ),
-            ),
-          ),
           Expanded(
-            child: SingleChildScrollView(
-              child: Transform.translate(
-                offset: const Offset(0, -60),
-                child: Container(
-                  margin: EdgeInsets.symmetric(horizontal: 16.w),
-                  padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 28.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.07),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Please Select your issue',
+            child: Stack(
+              children: [
+                // ── Blue hero — takes top portion ──────────
+                Positioned(
+                  top: 0, left: 0, right: 0,
+                  child: IgnorePointer(
+                    ignoring: true,
+                    child: ParallaxHeroWidget(
+                      bottomPadding: 220,
+                      child: Text(
+                        'Having Trouble\nSigning in?',
                         style: GoogleFonts.dmSans(
-                          fontSize: 14.sp,
-                          color: Colors.grey.shade500,
+                          fontSize: 30.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: -0.8,
+                          height: 1.15,
                         ),
                       ),
-                      SizedBox(height: 20.h),
-                      _buildRadioOption("I don't know my used ID ?", "id_issue"),
-                      SizedBox(height: 4.h),
-                      _buildRadioOption("I don't know my Password ?", "pass_issue"),
-                      SizedBox(height: 4.h),
-                      _buildRadioOption(
-                          "Doesn't have access to my Registered E-mail ID",
-                          "email_issue"),
-                      SizedBox(height: 24.h),
-                      _buildContinueButton(),
-                      SizedBox(height: 16.h),
-                      GestureDetector(
-                        onTap: () => Get.back(),
-                        child: Text(
-                          'Back to Sign In',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 14.sp,
-                            color: _C.blue,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+
+                // ── White card overlaps hero from bottom ───
+                Positioned(
+                  top: 235.h,   // ← overlap point: sits over blue
+                  left: 0, right: 0, bottom: 0,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Container(
+                          margin: EdgeInsets.symmetric(
+                              horizontal: 16.w),
+                          padding: EdgeInsets.fromLTRB(
+                              24.w, 28.h, 24.w, 28.h),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius:
+                            BorderRadius.circular(28.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black
+                                    .withValues(alpha: 0.08),
+                                blurRadius: 24,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Please Select your issue',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 14.sp,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                              SizedBox(height: 20.h),
+                              _buildRadioOption(
+                                "I don't know my used ID ?",
+                                "id_issue",
+                              ),
+                              SizedBox(height: 8.h),
+                              _buildRadioOption(
+                                "I don't know my Password ?",
+                                "pass_issue",
+                              ),
+                              SizedBox(height: 8.h),
+                              _buildRadioOption(
+                                "Doesn't have access to my Registered E-mail ID",
+                                "email_issue",
+                              ),
+                              SizedBox(height: 28.h),
+                              _buildContinueButton(),
+                              SizedBox(height: 16.h),
+                              GestureDetector(
+                                onTap: () => Get.back(),
+                                child: Text(
+                                  'Back to Sign In',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 14.sp,
+                                    color: _C.blue,
+                                    fontWeight:
+                                    FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 24.h),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           _buildHomeIndicator(),
@@ -114,8 +137,6 @@ class _TroubleScreenState extends State<TroubleScreen> {
     );
   }
 
-
-
   Widget _buildRadioOption(String title, String value) {
     return Obx(() {
       final selected = controller.selectedIssue.value == value;
@@ -123,31 +144,62 @@ class _TroubleScreenState extends State<TroubleScreen> {
         onTap: () => controller.selectedIssue.value = value,
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 4.h),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 22.w,
-                height: 22.h,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: selected ? _C.blue : Colors.grey.shade400,
-                    width: selected ? 5.5 : 1.5,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: selected
+                  ? _C.blue.withValues(alpha: 0.05)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            padding: EdgeInsets.all(8.w),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 24.w,
+                  height: 24.h,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected
+                          ? _C.blue
+                          : Colors.grey.shade400,
+                      width: selected ? 2 : 1.5,
+                    ),
+                  ),
+                  child: selected
+                      ? Center(
+                    child: Container(
+                      width: 10.w,
+                      height: 10.h,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _C.blue,
+                      ),
+                    ),
+                  )
+                      : null,
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14.sp,
+                      fontWeight: selected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                      color: selected
+                          ? Colors.grey.shade900
+                          : Colors.grey.shade700,
+                      height: 1.4,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Text(
-                  title,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14.sp,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -172,6 +224,13 @@ class _TroubleScreenState extends State<TroubleScreen> {
         decoration: BoxDecoration(
           color: _C.blue,
           borderRadius: BorderRadius.circular(30.r),
+          boxShadow: [
+            BoxShadow(
+              color: _C.blue.withValues(alpha: 0.3),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         alignment: Alignment.center,
         child: Text(

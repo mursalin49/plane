@@ -58,7 +58,7 @@ class _ResetSuccessScreenState extends State<ResetSuccessScreen>
         children: [
           // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
-            bottomPadding: 200,
+            bottomPadding: 220,
             child: Text(
               'Reset ID',
               style: GoogleFonts.dmSans(
@@ -73,7 +73,7 @@ class _ResetSuccessScreenState extends State<ResetSuccessScreen>
           // ── White Card ────────────────────────────────
           Expanded(
             child: Transform.translate(
-              offset: const Offset(0, -100),
+              offset: const Offset(0, -180),
               child: Container(
                 margin: EdgeInsets.symmetric(horizontal: 16.w),
                 padding: EdgeInsets.fromLTRB(24.w, 40.h, 24.w, 36.h),

@@ -111,7 +111,7 @@ class _OtpVerificationScreenState extends State<OtpIdVerificationScreen> {
         children: [
           // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
-            bottomPadding: 44,
+            bottomPadding: 200,
             child: Text(
               'OTP Verification',
               style: GoogleFonts.dmSans(
@@ -127,7 +127,7 @@ class _OtpVerificationScreenState extends State<OtpIdVerificationScreen> {
           Expanded(
             child: SingleChildScrollView(
               child: Transform.translate(
-                offset: const Offset(0, -30),
+                offset: const Offset(0, -140),
                 child: Container(
                   margin: EdgeInsets.symmetric(horizontal: 16.w),
                   padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 28.h),

@@ -41,7 +41,7 @@ class _ResetPasswordScreenState extends State<ResetId > {
         children: [
           // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
-            bottomPadding: 200,
+            bottomPadding: 220,
             child: Text(
               'Reset ID',
               style: GoogleFonts.dmSans(
@@ -57,7 +57,7 @@ class _ResetPasswordScreenState extends State<ResetId > {
           Expanded(
             child: SingleChildScrollView(
               child: Transform.translate(
-                offset: const Offset(0, -90),
+                offset: const Offset(0, -160),
                 child: Container(
                   margin: EdgeInsets.symmetric(horizontal: 16.w),
                   padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 28.h),

@@ -1,3 +1,4 @@
+import 'package:avislap/views/auth/reset_id.dart';
 import 'package:avislap/widgets/parallax_hero_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -35,7 +36,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         children: [
           // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
-            bottomPadding: 44,
+            bottomPadding: 220,
             child: Text(
               'Forgot Password',
               style: GoogleFonts.dmSans(
@@ -52,7 +53,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Expanded(
             child: SingleChildScrollView(
               child: Transform.translate(
-                offset: const Offset(0, -30),
+                offset: const Offset(0, -160),
                 child: Container(
                   margin: EdgeInsets.symmetric(horizontal: 16.w),
                   padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 28.h),
@@ -126,8 +127,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       // Send Reset Link button
                       GestureDetector(
                         onTap: () {
-                          // send reset link logic
-                          Get.back();
+
+                          Get.to(() => const OtpIdVerificationScreen());
                         },
                         child: Container(
                           height: 54.h,

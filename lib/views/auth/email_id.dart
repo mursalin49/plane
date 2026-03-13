@@ -25,7 +25,7 @@ class _NoEmailAccessScreenState extends State<NoEmailAccessScreen> {
         children: [
           // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
-            bottomPadding: 44,
+            bottomPadding: 220,
             child: Text(
               '''Doesn't have access to\nE-mail ID''',
               style: GoogleFonts.dmSans(
@@ -42,7 +42,7 @@ class _NoEmailAccessScreenState extends State<NoEmailAccessScreen> {
           Expanded(
             child: SingleChildScrollView(
               child: Transform.translate(
-                offset: const Offset(0, -30),
+                offset: const Offset(0, -80),
                 child: Container(
                   margin: EdgeInsets.symmetric(horizontal: 16.w),
                   padding: EdgeInsets.fromLTRB(24.w, 28.h, 24.w, 32.h),
