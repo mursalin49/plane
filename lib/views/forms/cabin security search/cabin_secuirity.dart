@@ -351,7 +351,7 @@ class _CabinQualityAuditScreenNState
       onPressed: () => _step > 0 ? setState(() => _step--) : Get.back(),
     ),
     title: Text(
-      'Cabin Quality Audit',
+      'Cabin Security Search\nTraining',
       style: GoogleFonts.dmSans(
         fontSize: 17.sp,
         fontWeight: FontWeight.w600,

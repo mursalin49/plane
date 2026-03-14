@@ -9,6 +9,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'LavSafetyObservationScreen.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:signature/signature.dart';
 
 class LAVSafetyScreen extends StatefulWidget {
   @override
@@ -34,6 +35,12 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
   final _otherFindingsCtrl = TextEditingController();
   final _additionalCtrl    = TextEditingController();
   final List<File> _step2Images = [];
+
+  final SignatureController _signatureController = SignatureController(
+    penStrokeWidth: 3,
+    penColor: Colors.black,
+    exportBackgroundColor: Colors.white,
+  );
 
   static const double _cardRadius  = 16;
   static const double _inputRadius = 12;
@@ -317,6 +324,105 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
                     }).toList(),
                   ),
                 ],
+                const SizedBox(height: 16),
+                // Beautiful Signature Section
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.draw_rounded, color: AppColors.mainAppColor, size: 20),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Digital Signature',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const Text(
+                                ' *',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ],
+                          ),
+                          GestureDetector(
+                            onTap: () => _signatureController.clear(),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'Clear',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            border: Border.all(color: AppColors.mainAppColor.withOpacity(0.3), width: 1.5),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: Center(
+                                  child: Text(
+                                    'Sign Here',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey.withOpacity(0.3),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Signature(
+                                controller: _signatureController,
+                                height: 140,
+                                backgroundColor: Colors.transparent,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
