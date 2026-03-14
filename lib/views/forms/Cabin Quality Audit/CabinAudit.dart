@@ -30,9 +30,7 @@ class _C {
 // ─────────────────────────────────────────────
 class AuditCheckItems {
   static const List<String> allItems = [
-    'First Class',
-    'Front Galley',
-    'Back Galley',
+
     'Front LAVs',
     'MID LAVs',
     'AFT LAVs',
@@ -320,8 +318,20 @@ class CabinAudit extends GetxController {
   void markSeat(String id, String status) => auditedSeats[id] = status;
   void clearSeat(String id) => auditedSeats.remove(id);
 
+  // New states for individual check items
+  final checkItemImages = <String, RxList<File>>{};
+  final checkItemTags = <String, RxList<String>>{};
+
   void setCheckItem(String seatId, String itemName, String status) {
-    checkItemStatuses['$seatId|$itemName'] = status;
+    final key = '$seatId|$itemName';
+    checkItemStatuses[key] = status;
+    
+    // Clear lists if N/A
+    if (status == 'na') {
+      checkItemImages.remove(key);
+      checkItemTags.remove(key);
+    }
+    
     // Derive overall seat status from check items
     final itemsForSeat = checkItemStatuses.keys
         .where((k) => k.startsWith('$seatId|'))
@@ -1181,16 +1191,21 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                           return Obx(() {
                             final status = itemStatuses[item]!.value;
                             return _buildCheckItemRow(
+                              seatId: id,
                               itemName: item,
                               status: status,
+                              ctrl: _ctrl,
                               onPass: () => ss(() {
                                 itemStatuses[item]!.value = 'pass';
+                                _ctrl.checkItemStatuses['$id|$item'] = 'pass';
                               }),
                               onFail: () => ss(() {
                                 itemStatuses[item]!.value = 'fail';
+                                _ctrl.checkItemStatuses['$id|$item'] = 'fail';
                               }),
                               onNA: () => ss(() {
                                 itemStatuses[item]!.value = 'na';
+                                _ctrl.setCheckItem(id, item, 'na');
                               }),
                             );
                           });
@@ -1296,12 +1311,23 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
 
   // ── Check Item Row ───────────────────────────
   Widget _buildCheckItemRow({
+    required String seatId,
     required String itemName,
     required String status,
+    required CabinAudit ctrl,
     required VoidCallback onPass,
     required VoidCallback onFail,
     required VoidCallback onNA,
   }) {
+    final key = '$seatId|$itemName';
+    final hasDetails = status == 'pass' || status == 'fail';
+
+    // Initialize lists in controller if needed
+    final imagesList = ctrl.checkItemImages.putIfAbsent(key, () => <File>[].obs);
+    final tagsList = ctrl.checkItemTags.putIfAbsent(key, () => <String>[].obs);
+
+    final picker = ImagePicker();
+
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
@@ -1316,25 +1342,196 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
               : _C.border,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              itemName,
-              style: GoogleFonts.dmSans(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: _C.dark,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  itemName,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: _C.dark,
+                  ),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              _miniStatusBtn('P', status == 'pass', _C.green, onPass),
+              SizedBox(width: 6.w),
+              _miniStatusBtn('F', status == 'fail', _C.red, onFail),
+              SizedBox(width: 6.w),
+              _miniStatusBtn('N/A', status == 'na', _C.grey, onNA),
+            ],
+          ),
+          
+          if (hasDetails) ...[
+            SizedBox(height: 12.h),
+            _sheetLabel('Upload specific images for $itemName:'),
+            _uploadRow(onTap: () async {
+              final picked = await picker.pickMultiImage();
+              if (picked.isNotEmpty) {
+                imagesList.addAll(picked.map((x) => File(x.path)));
+              }
+            }),
+            SizedBox(height: 10.h),
+            _thumbsRow(imagesList),
+            SizedBox(height: 10.h),
+            _sheetLabel('Select Hashtags:'),
+            _itemHashtagField(tags: tagsList),
+          ]
+        ],
+      ),
+    );
+  }
+
+  Widget _itemHashtagField({
+    required RxList<String> tags,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _C.white,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: _C.border, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Obx(
+            () => tags.isEmpty
+                ? const SizedBox.shrink()
+                : Container(
+                    padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 4.h),
+                    child: Wrap(
+                      spacing: 8.w,
+                      runSpacing: 8.h,
+                      children: tags.map((tag) {
+                        return Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            color: _C.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(16.r),
+                            border: Border.all(color: _C.primary.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                tag,
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 12.sp,
+                                  color: _C.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(width: 4.w),
+                              GestureDetector(
+                                onTap: () => tags.remove(tag),
+                                child: Icon(Icons.close, size: 14.sp, color: _C.primary),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+          ),
+          
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: tags.isEmpty ? BorderRadius.circular(20.r) : BorderRadius.vertical(bottom: Radius.circular(20.r)),
+              onTap: () {
+                _showPredefinedTagsModal(tags);
+              },
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                child: Row(
+                  children: [
+                    Icon(Icons.tag_rounded, size: 20.sp, color: _C.grey),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'Select Hashtags',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 14.sp,
+                        color: _C.grey,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          SizedBox(width: 8.w),
-          _miniStatusBtn('P', status == 'pass', _C.green, onPass),
-          SizedBox(width: 6.w),
-          _miniStatusBtn('F', status == 'fail', _C.red, onFail),
-          SizedBox(width: 6.w),
-          _miniStatusBtn('N/A', status == 'na', _C.grey, onNA),
         ],
+      ),
+    );
+  }
+
+  void _showPredefinedTagsModal(RxList<String> tags) {
+    final predefinedTags = [
+      '#Dirty', '#Broken', '#Missing', '#Stained', '#Replaced',
+      '#Scratched', '#Malfunctioning', '#Torn', '#Wet', '#NeedsCleaning'
+    ];
+    
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          color: _C.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select Hashtags',
+              style: GoogleFonts.dmSans(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: _C.primary,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Wrap(
+              spacing: 8.w,
+              runSpacing: 8.h,
+              children: predefinedTags.map((tag) {
+                return Obx(() {
+                  final isSelected = tags.contains(tag);
+                  return GestureDetector(
+                    onTap: () {
+                      if (isSelected) {
+                        tags.remove(tag);
+                      } else {
+                        tags.add(tag);
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                      decoration: BoxDecoration(
+                        color: isSelected ? _C.primary : _C.bg,
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(
+                          color: isSelected ? _C.primary : _C.border,
+                        ),
+                      ),
+                      child: Text(
+                        tag,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13.sp,
+                          color: isSelected ? Colors.white : _C.dark,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  );
+                });
+              }).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }

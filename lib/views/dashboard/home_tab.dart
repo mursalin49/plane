@@ -1,7 +1,9 @@
 
 
+import 'package:avislap/views/forms/Cabin%20Quality%20Audit/CabinQualityAuditList.dart';
 import 'package:avislap/views/forms/LAV%20Safety%20Observation/LAVSafety.dart';
 import 'package:avislap/views/forms/LAV%20Safety%20Observation/LavSafetyObservationScreen.dart';
+import 'package:avislap/views/forms/cabin%20security%20search/CabinSecurityTrainingScreen.dart';
 import 'package:avislap/widgets/app_drawer_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -45,10 +47,10 @@ class HomeTab extends StatelessWidget {
                   const SizedBox(height: 24),
                   _TasksSection(
                     toComplete: tasksToComplete,
-                    onCabinAudit: () => Get.to(() => CabinAuditScreen()),
+                    onCabinAudit: () => Get.to(() => CabinQualityAuditListScreen()),
                     onLavSafety: () => Get.to(() => LavSafetyObservationScreen()),
                     onCabinSecurity: () =>
-                        Get.to(() => const CabinQualityAuditScreenN()),
+                        Get.to(() => CabinSecurityScreen()),
                   ),
                   const SizedBox(height: 32),
                 ],

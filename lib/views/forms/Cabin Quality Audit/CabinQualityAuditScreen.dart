@@ -74,11 +74,13 @@ class AuditedAreaResult {
   final String areaId;
   final String sectionLabel;
   final List<CheckItemResult> checkItems;
+  final List<String>? pictures;
 
   AuditedAreaResult({
     required this.areaId,
     required this.sectionLabel,
     required this.checkItems,
+    this.pictures,
   });
 
   AuditStatus get overallStatus {
@@ -224,6 +226,10 @@ class CabinQualityAuditController extends GetxController {
       AuditedAreaResult(
         areaId: 'Galley FWD',
         sectionLabel: 'Galley',
+        pictures: [
+          'assets/images/indor.png',
+          'assets/images/window.png',
+        ],
         checkItems: [
           CheckItemResult(itemName: 'First Class', status: AuditStatus.na),
           CheckItemResult(itemName: 'Front Galley', status: AuditStatus.pass),
@@ -240,6 +246,7 @@ class CabinQualityAuditController extends GetxController {
     ],
   ).obs;
 
+  final Rx<AuditStatus?> filter = Rx<AuditStatus?>(null);
   final RxString currentDate = 'Dec 15, 2024 • 2:30 PM'.obs;
   final RxInt expandedAreaIndex = RxInt(-1);
 
@@ -330,10 +337,70 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
               ),
             ),
           ),
-          Icon(Icons.add_circle_outline, color: _Colors.primary, size: 24.sp),
+          GestureDetector(
+            onTap: _showFilterSheet,
+            child: Icon(Icons.more_vert, color: _Colors.primary, size: 24.sp),
+          ),
         ],
       ),
     );
+  }
+
+  void _showFilterSheet() {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          color: _Colors.cardBg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Filter by Status',
+              style: GoogleFonts.poppins(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: _Colors.primary,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            _filterOption('All', null),
+            _filterOption('Pass', AuditStatus.pass),
+            _filterOption('Fail', AuditStatus.fail),
+            SizedBox(height: 10.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _filterOption(String label, AuditStatus? status) {
+    return Obx(() {
+      final isSelected = controller.filter.value == status;
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(
+          status == null ? Icons.all_inclusive_rounded : status.icon,
+          color: status == null ? _Colors.primary : status.color,
+        ),
+        title: Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 14.sp,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? _Colors.primary : _Colors.namePrimary,
+          ),
+        ),
+        trailing: isSelected ? Icon(Icons.check_rounded, color: _Colors.primary) : null,
+        onTap: () {
+          controller.filter.value = status;
+          Get.back();
+        },
+      );
+    });
   }
 
   // ── Date Navigation ──────────────────────────────────────
@@ -499,6 +566,35 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
   Widget _buildAuditedAreasList() {
     return Obx(() {
       final d = controller.detail.value;
+      final currentFilter = controller.filter.value;
+
+      final filteredAreas = d.auditedAreas.where((area) {
+        if (currentFilter == null) return true; // Show all
+        // Show if overall status matches filter OR any item inside area matches filter
+        if (area.overallStatus == currentFilter) return true;
+        return area.checkItems.any((c) => c.status == currentFilter);
+      }).toList();
+
+      if (filteredAreas.isEmpty) {
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+          padding: EdgeInsets.all(24.w),
+          decoration: BoxDecoration(
+            color: _Colors.cardBg,
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          child: Center(
+            child: Text(
+              'No sections match the selected filter.',
+              style: GoogleFonts.poppins(
+                fontSize: 14.sp,
+                color: _Colors.textGrey,
+              ),
+            ),
+          ),
+        );
+      }
+
       return Container(
         margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
         decoration: BoxDecoration(
@@ -521,20 +617,25 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
                     ),
                   ),
                   SizedBox(width: 10.w),
-                  Text(
-                    'Audited Areas',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w700,
-                      color: _Colors.namePrimary,
+                  Expanded(
+                    child: Text(
+                      'Audited Areas',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w700,
+                        color: _Colors.namePrimary,
+                      ),
                     ),
                   ),
+                  if (currentFilter != null) ...[
+                    _statusBadge(currentFilter),
+                  ]
                 ],
               ),
             ),
             Divider(height: 1, color: _Colors.divider),
-            ...List.generate(d.auditedAreas.length, (index) {
-              final area = d.auditedAreas[index];
+            ...List.generate(filteredAreas.length, (index) {
+              final area = filteredAreas[index];
               final isExpanded = controller.expandedAreaIndex.value == index;
               return _buildAreaTile(area, index, isExpanded);
             }),
@@ -614,6 +715,15 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
   }
 
   Widget _buildExpandedItems(AuditedAreaResult area) {
+    final currentFilter = controller.filter.value;
+    
+    // Filter out N/A. Further filter if user selected Pass/Fail overall.
+    final itemsToShow = area.checkItems.where((item) {
+      if (item.status == AuditStatus.na) return false;
+      if (currentFilter != null && item.status != currentFilter) return false;
+      return true;
+    }).toList();
+
     return Container(
       margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
       padding: EdgeInsets.all(12.w),
@@ -622,27 +732,84 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Column(
-        children: area.checkItems.map((item) {
-          return Padding(
-            padding: EdgeInsets.symmetric(vertical: 5.h),
-            child: Row(
-              children: [
-                Icon(item.status.icon, color: item.status.color, size: 16.sp),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Text(
-                    item.itemName,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12.sp,
-                      color: _Colors.namePrimary,
-                    ),
-                  ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (itemsToShow.isEmpty) ...[
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              child: Text(
+                'No audited items in this section.',
+                style: GoogleFonts.poppins(
+                  fontSize: 12.sp,
+                  color: _Colors.textGrey,
+                  fontStyle: FontStyle.italic,
                 ),
-                _statusChip(item.status),
-              ],
+              ),
+            ),
+          ] else ...[
+            ...itemsToShow.map((item) {
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: 5.h),
+                child: Row(
+                  children: [
+                    Icon(item.status.icon, color: item.status.color, size: 16.sp),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: Text(
+                        item.itemName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.sp,
+                          color: _Colors.namePrimary,
+                        ),
+                      ),
+                    ),
+                    _statusChip(item.status),
+                  ],
+                ),
+              );
+            }),
+          ],
+
+          // Inline section pictures
+          if (area.pictures != null && area.pictures!.isNotEmpty) ...[
+            SizedBox(height: 12.h),
+            Divider(color: _Colors.divider),
+            SizedBox(height: 8.h),
+            Text(
+              'Attachments for ${area.sectionLabel}',
+              style: GoogleFonts.poppins(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: _Colors.namePrimary,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            _buildAreaPictures(area.pictures!),
+          ]
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAreaPictures(List<String> pictures) {
+    return SizedBox(
+      height: 80.h,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: pictures.length,
+        itemBuilder: (context, i) {
+          return Container(
+            width: 80.w,
+            margin: EdgeInsets.only(right: 8.w),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8.r),
+              image: DecorationImage(
+                image: AssetImage(pictures[i]),
+                fit: BoxFit.cover,
+              ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
@@ -662,7 +829,7 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionTitle('Pictures'),
+            _sectionTitle('Other Findings & Pictures'),
             SizedBox(height: 12.h),
             _buildImageSlider(d.pictures),
           ],
@@ -863,7 +1030,7 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
       case 'first class':
       case 'business class':
         return Icons.airline_seat_recline_extra_rounded;
-      case 'comfort+':
+      case 'comfort':
         return Icons.airline_seat_recline_normal_rounded;
       case 'main cabin':
       case 'economy':

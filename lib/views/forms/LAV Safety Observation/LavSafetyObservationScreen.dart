@@ -272,7 +272,7 @@ class _LavSafetyObservationScreenState
   Widget _buildObservationCard(ObservationItem item) {
     return GestureDetector(
       onTap: () {
-        Get.to(() => LAVSafetyScreen());
+        // Get.to(() => LAVSafetyScreen());
       },
       child: Container(
         color: _Colors.cardBg,

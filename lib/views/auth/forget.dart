@@ -1,4 +1,4 @@
-import 'package:avislap/views/auth/reset_id.dart';
+import 'package:avislap/views/auth/otp_passwor.dart';
 import 'package:avislap/widgets/parallax_hero_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -128,7 +128,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       GestureDetector(
                         onTap: () {
 
-                          Get.to(() => const OtpIdVerificationScreen());
+                          Get.to(() => OtpPasswordVerificationScreen());
                         },
                         child: Container(
                           height: 54.h,

@@ -402,8 +402,8 @@ class _CabinQualityAuditScreenNState
     exportBackgroundColor: Colors.white,
   );
 
-  // Steps: 0 = Training Info, 1 = Seat Map + Area Checklist, 2 = Finalize
-  int _step = 0;
+  // Steps: 1 = Seat Map + Area Checklist, 2 = Finalize
+  int _step = 1;
 
   final RxList<File> _selectedImages = <File>[].obs;
   final ImagePicker _picker = ImagePicker();
@@ -952,10 +952,9 @@ class _CabinQualityAuditScreenNState
       spacing: 14.w,
       runSpacing: 6.h,
       children: [
-        _legendDot(_C.primary, '🔵 Tap to select'),
         _legendDot(_C.green, 'Pass'),
         _legendDot(_C.red, 'Fail'),
-        _legendDot(_C.seatColor, 'Not selected'),
+
       ],
     );
   }
@@ -1224,20 +1223,7 @@ class _CabinQualityAuditScreenNState
                     height: 22.sp),
               ),
             ),
-            if (isSelected)
-              Positioned(
-                top: -4,
-                right: -4,
-                child: Container(
-                  width: 14.w,
-                  height: 14.h,
-                  decoration: const BoxDecoration(
-                    color: _C.green,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.check, color: Colors.white, size: 9.sp),
-                ),
-              ),
+
           ],
         ),
       );
@@ -1467,251 +1453,7 @@ class _CabinQualityAuditScreenNState
     });
   }
 
-  // ─────────────────────────────────────────────
-  // SEAT SHEET
-  // ─────────────────────────────────────────────
-  void _showSeatSheet(String id) {
-    String status = _ctrl.auditedSeats[id] ?? '';
-    final RxList<File> imgs = <File>[].obs;
-    final picker = ImagePicker();
 
-    Get.bottomSheet(
-      StatefulBuilder(
-        builder: (context, ss) => Material(
-          color: Colors.transparent,
-          child: Container(
-            height: MediaQuery.of(context).size.height * 0.55,
-            decoration: BoxDecoration(
-              color: _C.white,
-              borderRadius:
-              BorderRadius.vertical(top: Radius.circular(20.r)),
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  child: Center(
-                    child: Container(
-                      width: 40.w,
-                      height: 4.h,
-                      decoration: BoxDecoration(
-                        color: _C.border,
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding:
-                    EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Seat: $id',
-                            style: GoogleFonts.dmSans(
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.w700,
-                                color: _C.primary)),
-                        SizedBox(height: 20.h),
-                        _buildSheetLabel('Status', required: true),
-                        Row(children: [
-                          Expanded(
-                            child: _buildStatusButton(
-                              label: 'Pass',
-                              icon: Icons.check,
-                              isSelected: status == 'pass',
-                              color: _C.green,
-                              onTap: () =>
-                                  ss(() => status = 'pass'),
-                            ),
-                          ),
-                          SizedBox(width: 10.w),
-                          Expanded(
-                            child: _buildStatusButton(
-                              label: 'Fail',
-                              icon: Icons.close,
-                              isSelected: status == 'fail',
-                              color: _C.red,
-                              onTap: () =>
-                                  ss(() => status = 'fail'),
-                            ),
-                          ),
-                          SizedBox(width: 10.w),
-                          Expanded(
-                            child: _buildStatusButton(
-                              label: 'N/A',
-                              icon: null,
-                              isSelected: status == 'na',
-                              color: _C.primary,
-                              onTap: () => ss(() => status = 'na'),
-                            ),
-                          ),
-                        ]),
-                        SizedBox(height: 16.h),
-                        _buildSheetLabel(
-                            'Upload image (max 100MB)'),
-                        GestureDetector(
-                          onTap: () async {
-                            final picked =
-                            await picker.pickMultiImage();
-                            if (picked.isNotEmpty) {
-                              imgs.addAll(picked
-                                  .map((x) => File(x.path)));
-                            }
-                          },
-                          child: Container(
-                            height: 50.h,
-                            decoration: BoxDecoration(
-                              color: _C.white,
-                              borderRadius:
-                              BorderRadius.circular(25.r),
-                              border: Border.all(
-                                  color: _C.border, width: 1.5),
-                            ),
-                            child: Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.cloud_upload_outlined,
-                                    size: 20.sp, color: _C.grey),
-                                SizedBox(width: 8.w),
-                                Text('Upload an image',
-                                    style: GoogleFonts.dmSans(
-                                        fontSize: 14.sp,
-                                        color: _C.grey)),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 10.h),
-                        Obx(() => imgs.isEmpty
-                            ? const SizedBox.shrink()
-                            : SizedBox(
-                          height: 76.h,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: imgs.length,
-                            itemBuilder: (_, i) => Stack(
-                              children: [
-                                Container(
-                                  width: 68.w,
-                                  height: 68.h,
-                                  margin: EdgeInsets.only(
-                                      right: 8.w),
-                                  decoration: BoxDecoration(
-                                    borderRadius:
-                                    BorderRadius.circular(
-                                        8.r),
-                                    border: Border.all(
-                                        color: _C.border),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius:
-                                    BorderRadius.circular(
-                                        8.r),
-                                    child: Image.file(imgs[i],
-                                        fit: BoxFit.cover),
-                                  ),
-                                ),
-                                Positioned(
-                                  top: 2,
-                                  right: 10,
-                                  child: GestureDetector(
-                                    onTap: () =>
-                                        imgs.removeAt(i),
-                                    child: Container(
-                                      padding:
-                                      EdgeInsets.all(2.r),
-                                      decoration:
-                                      const BoxDecoration(
-                                        color: Colors.black54,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(Icons.close,
-                                          color: Colors.white,
-                                          size: 13.sp),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )),
-                      ],
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.fromLTRB(
-                      20.w, 12.h, 20.w, 24.h),
-                  decoration: BoxDecoration(
-                    color: _C.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: Row(children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Get.back(),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _C.primary,
-                          side: BorderSide(
-                              color: _C.primary, width: 1.5),
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                              BorderRadius.circular(25.r)),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 14.h),
-                        ),
-                        child: Text('Cancel',
-                            style: GoogleFonts.dmSans(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w600)),
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (status.isNotEmpty) {
-                            _ctrl.markSeat(id, status);
-                          }
-                          Get.back();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _C.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                              BorderRadius.circular(25.r)),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 14.h),
-                          elevation: 0,
-                        ),
-                        child: Text('Apply',
-                            style: GoogleFonts.dmSans(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                    ),
-                  ]),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      isScrollControlled: true,
-      isDismissible: true,
-      enableDrag: true,
-    );
-  }
 
   // ─────────────────────────────────────────────
   // SHARED HELPERS
