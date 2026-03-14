@@ -115,12 +115,10 @@ class CabinSecurityScreen extends StatefulWidget {
   const CabinSecurityScreen({super.key});
 
   @override
-  State<CabinSecurityScreen> createState() =>
-      _CabinSecurityScreenState();
+  State<CabinSecurityScreen> createState() => _CabinSecurityScreenState();
 }
 
-class _CabinSecurityScreenState
-    extends State<CabinSecurityScreen> {
+class _CabinSecurityScreenState extends State<CabinSecurityScreen> {
   late final CabinSecurityController controller;
 
   @override
@@ -139,8 +137,7 @@ class _CabinSecurityScreenState
             _buildAppBar(),
             Expanded(
               child: SingleChildScrollView(
-                padding:
-                EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -181,13 +178,17 @@ class _CabinSecurityScreenState
             ),
           ),
           IconButton(
-            icon: Icon(Icons.more_vert, color: AppColors.mainAppColor, size: 24.sp),
+            icon: Icon(
+              Icons.more_vert,
+              color: AppColors.mainAppColor,
+              size: 24.sp,
+            ),
             onPressed: () => Get.bottomSheet(
               const NewSearchSheet(),
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
             ),
-          )
+          ),
         ],
       ),
     );
@@ -227,8 +228,7 @@ class _CabinSecurityScreenState
             Get.to(() => const CabinQualityAuditScreenN());
           },
           child: Container(
-            padding:
-            EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
             decoration: BoxDecoration(
               color: _Colors.newAuditBtn,
               borderRadius: BorderRadius.circular(20.r),
@@ -254,8 +254,7 @@ class _CabinSecurityScreenState
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: controller.trainings.length,
-        separatorBuilder: (_, __) =>
-            Divider(height: 1, color: _Colors.divider),
+        separatorBuilder: (_, __) => Divider(height: 1, color: _Colors.divider),
         itemBuilder: (context, index) {
           return _buildTrainingCard(controller.trainings[index]);
         },
@@ -274,129 +273,127 @@ class _CabinSecurityScreenState
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar with blue border + green dot
-          Stack(
-            children: [
-              Container(
-                padding: EdgeInsets.all(3.r),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: _Colors.primary,
-                    width: 2.5.w,
-                  ),
-                ),
-                child: CircleAvatar(
-                  radius: 26.r,
-                  backgroundImage: AssetImage(item.observerImage),
-                  backgroundColor: Colors.grey.shade200,
-                  onBackgroundImageError: (_, __) {},
-                ),
-              ),
-              Positioned(
-                right: 2,
-                bottom: 2,
-                child: Container(
-                  width: 13.w,
-                  height: 13.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1DB954),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(width: 12.w),
-
-          // Middle content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Avatar with blue border + green dot
+            Stack(
               children: [
-                SizedBox(height: 5.h),
-
-                // Name
-                Text(
-                  item.observerName,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _Colors.namePrimary,
+                Container(
+                  padding: EdgeInsets.all(3.r),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: _Colors.primary, width: 2.5.w),
+                  ),
+                  child: CircleAvatar(
+                    radius: 26.r,
+                    backgroundImage: AssetImage(item.observerImage),
+                    backgroundColor: Colors.grey.shade200,
+                    onBackgroundImageError: (_, __) {},
                   ),
                 ),
-                SizedBox(height: 6.h),
-
-                // Date • Time
-                Row(
-                  children: [
-                    Text(
-                      item.date,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11.sp,
-                        color: _Colors.textGrey,
-                      ),
+                Positioned(
+                  right: 2,
+                  bottom: 2,
+                  child: Container(
+                    width: 13.w,
+                    height: 13.h,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1DB954),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 5.w),
-                      child: Container(
-                        width: 4.w,
-                        height: 4.h,
-                        decoration: const BoxDecoration(
-                          color: _Colors.dotColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      item.time,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11.sp,
-                        color: _Colors.textGrey,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8.h),
-
-                // Gate
-                Text(
-                  item.gate,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _Colors.textDark,
-                  ),
-                ),
-                SizedBox(height: 6.h),
-
-                // ✅ PASS / FAIL status
-                Text(
-                  item.isPassed ? 'PASS' : 'FAIL',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w700,
-                    color: item.isPassed ? _Colors.pass : _Colors.fail,
                   ),
                 ),
               ],
             ),
-          ),
-          SizedBox(width: 10.w),
+            SizedBox(width: 12.w),
 
-          // Two stacked location images
-          Column(
-            children: [
-              _buildLocationImage(item.locationImage),
-              SizedBox(height: 6.h),
-              _buildLocationImage(item.locationImage2),
-            ],
-          ),
-        ],
+            // Middle content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 5.h),
+
+                  // Name
+                  Text(
+                    item.observerName,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: _Colors.namePrimary,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+
+                  // Date • Time
+                  Row(
+                    children: [
+                      Text(
+                        item.date,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.sp,
+                          color: _Colors.textGrey,
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 5.w),
+                        child: Container(
+                          width: 4.w,
+                          height: 4.h,
+                          decoration: const BoxDecoration(
+                            color: _Colors.dotColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        item.time,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.sp,
+                          color: _Colors.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8.h),
+
+                  // Gate
+                  Text(
+                    item.gate,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: _Colors.textDark,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+
+                  // ✅ PASS / FAIL status
+                  Text(
+                    item.isPassed ? 'PASS' : 'FAIL',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: item.isPassed ? _Colors.pass : _Colors.fail,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 10.w),
+
+            // Two stacked location images
+            Column(
+              children: [
+                _buildLocationImage(item.locationImage),
+                SizedBox(height: 6.h),
+                _buildLocationImage(item.locationImage2),
+              ],
+            ),
+          ],
+        ),
       ),
-      ) );
+    );
   }
 
   // ── Location Image ────────────────────────────────────────

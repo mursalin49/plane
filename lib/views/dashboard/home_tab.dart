@@ -1,5 +1,3 @@
-
-
 import 'package:avislap/views/forms/LAV%20Safety%20Observation/LAVSafety.dart';
 import 'package:avislap/views/forms/LAV%20Safety%20Observation/LavSafetyObservationScreen.dart';
 import 'package:avislap/widgets/app_drawer_widget.dart';
@@ -7,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../forms/Cabin Quality Audit/CabinAudit.dart';
+import '../forms/cabin security search/CabinSecurityTrainingScreen.dart';
 import '../forms/cabin security search/cabin_secuirity.dart';
 
 class HomeTab extends StatelessWidget {
@@ -46,9 +45,10 @@ class HomeTab extends StatelessWidget {
                   _TasksSection(
                     toComplete: tasksToComplete,
                     onCabinAudit: () => Get.to(() => CabinAuditScreen()),
-                    onLavSafety: () => Get.to(() => LavSafetyObservationScreen()),
+                    onLavSafety: () =>
+                        Get.to(() => LavSafetyObservationScreen()),
                     onCabinSecurity: () =>
-                        Get.to(() => const CabinQualityAuditScreenN()),
+                        Get.to(() => const CabinSecurityScreen()),
                   ),
                   const SizedBox(height: 32),
                 ],
@@ -79,8 +79,18 @@ class _HeroSection extends StatelessWidget {
 
   String _formatDate(DateTime d) {
     const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
     return "${months[d.month - 1]} ${d.day}";
   }
@@ -97,10 +107,7 @@ class _HeroSection extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1D4ED8),
-            Color(0xFF3B82F6),
-          ],
+          colors: [Color(0xFF1D4ED8), Color(0xFF3B82F6)],
         ),
       ),
       child: SafeArea(
@@ -115,11 +122,7 @@ class _HeroSection extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: onMenuTap,
-                  child: const Icon(
-                    Icons.menu,
-                    color: Colors.white,
-                    size: 26,
-                  ),
+                  child: const Icon(Icons.menu, color: Colors.white, size: 26),
                 ),
                 // const Icon(
                 //   Icons.notifications_none_outlined,
@@ -214,8 +217,7 @@ class _SupervisorCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundColor:
-            AppColors.mainAppColor.withValues(alpha: 0.2),
+            backgroundColor: AppColors.mainAppColor.withValues(alpha: 0.2),
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : "?",
               style: const TextStyle(
@@ -297,11 +299,9 @@ class _TasksSection extends StatelessWidget {
             ),
             if (toComplete > 0)
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color:
-                  AppColors.mainAppColor.withValues(alpha: 0.12),
+                  color: AppColors.mainAppColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -389,8 +389,7 @@ class _PrimaryTaskCard extends StatelessWidget {
                   color: AppColors.mainAppColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon,
-                    size: 28, color: AppColors.mainAppColor),
+                child: Icon(icon, size: 28, color: AppColors.mainAppColor),
               ),
               const SizedBox(width: 18),
               Expanded(
@@ -419,7 +418,9 @@ class _PrimaryTaskCard extends StatelessWidget {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 10),
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.mainAppColor,
                   borderRadius: BorderRadius.circular(10),
@@ -465,8 +466,7 @@ class _SecondaryTaskTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding:
-          const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
           child: Row(
             children: [
               Container(

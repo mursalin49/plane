@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../views/auth/FlightAnimation.dart';
 import '../views/dashboard/dashboard_screen.dart';
 import '../views/forms/Cabin Quality Audit/CabinAudit.dart';
+import '../views/forms/cabin security search/CabinSecurityTrainingScreen.dart';
 import '../views/forms/cabin security search/cabin_secuirity.dart';
 
 class RouteHelper {
