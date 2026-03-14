@@ -1,5 +1,6 @@
-
 import 'LAVSafety.dart';
+import 'package:avislap/utils/app_colors.dart';
+import 'package:avislap/views/forms/cabin%20security%20search/training_filter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -17,6 +18,7 @@ class _Colors {
   static const Color dotColor = Color(0xFF9E9E9E);
   static const Color namePrimary = Color(0xFF3D5AFE);
   static const Color divider = Color(0xFFEEEEEE);
+  static const Color newObservationBtn = Color(0xFF3D5AFE);
 }
 
 // =====================
@@ -180,13 +182,15 @@ class _LavSafetyObservationScreenState
           ),
           IconButton(
             icon: Icon(
-              Icons.add_circle_outline,
-              color: _Colors.primary,
+              Icons.more_vert,
+              color: AppColors.mainAppColor,
               size: 24.sp,
             ),
-            onPressed: () {
-              Get.to(() => LAVSafetyScreen());
-            },
+            onPressed: () => Get.bottomSheet(
+              const NewSearchSheet(),
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+            ),
           )
         ],
       ),
@@ -196,22 +200,49 @@ class _LavSafetyObservationScreenState
   // ── Section Header ───────────────────────────────────────
   Widget _buildSectionHeader() {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          width: 4.w,
-          height: 22.h,
-          decoration: BoxDecoration(
-            color: _Colors.primary,
-            borderRadius: BorderRadius.circular(2.r),
-          ),
+        Row(
+          children: [
+            Container(
+              width: 4.w,
+              height: 22.h,
+              decoration: BoxDecoration(
+                color: _Colors.primary,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Text(
+              'Past Observations',
+              style: GoogleFonts.poppins(
+                fontSize: 17.sp,
+                fontWeight: FontWeight.w700,
+                color: _Colors.textDark,
+              ),
+            ),
+          ],
         ),
-        SizedBox(width: 10.w),
-        Text(
-          'Past Observations',
-          style: GoogleFonts.poppins(
-            fontSize: 17.sp,
-            fontWeight: FontWeight.w700,
-            color: _Colors.textDark,
+
+        // New Observation button
+        GestureDetector(
+          onTap: () {
+            Get.to(() => LAVSafetyScreen());
+          },
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: _Colors.newObservationBtn,
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Text(
+              'New Observation',
+              style: GoogleFonts.poppins(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
       ],

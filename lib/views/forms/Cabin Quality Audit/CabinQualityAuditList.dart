@@ -32,7 +32,12 @@ class CabinAuditItem {
   final String date;
   final String time;
   final String gate;
+
+  /// Real clean types:
+  /// Charter | Diversion | DCS Turn | MSGT Turn |
+  /// RAD – Remain All Day | RON – Remain Over Night | Security Search
   final String type;
+
   final String locationImage;
   final String locationImage2;
   final String? bottomAvatarImage;
@@ -101,7 +106,7 @@ class CabinQualityAuditListController extends GetxController {
         date: 'Dec 15, 2024',
         time: '2:30 PM',
         gate: 'Gate A-12',
-        type: 'RON',
+        type: 'RON – Remain Over Night',
         locationImage: 'assets/images/indor.png',
         locationImage2: 'assets/images/window.png',
         bottomAvatarImage: 'assets/images/mursalin.jpg',
@@ -141,8 +146,7 @@ class _CabinQualityAuditListScreenState
             _buildAppBar(),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                    horizontal: 16.w, vertical: 16.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -163,14 +167,12 @@ class _CabinQualityAuditListScreenState
   Widget _buildAppBar() {
     return Container(
       color: Colors.white,
-      padding:
-      EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => Get.back(),
-            child: Icon(Icons.arrow_back,
-                color: _Colors.primary, size: 22.sp),
+            child: Icon(Icons.arrow_back, color: _Colors.primary, size: 22.sp),
           ),
           Expanded(
             child: Text(
@@ -183,15 +185,19 @@ class _CabinQualityAuditListScreenState
               ),
             ),
           ),
-          // ✅ Three dot menu
+          // Three dot menu
           IconButton(
-            icon: Icon(Icons.more_vert, color: AppColors.mainAppColor, size: 24.sp),
+            icon: Icon(
+              Icons.more_vert,
+              color: AppColors.mainAppColor,
+              size: 24.sp,
+            ),
             onPressed: () => Get.bottomSheet(
               const NewSearchSheet(),
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
             ),
-          )
+          ),
         ],
       ),
     );
@@ -224,14 +230,13 @@ class _CabinQualityAuditListScreenState
           ],
         ),
 
-        // ✅ New Audit button
+        // New Audit button
         GestureDetector(
           onTap: () {
             Get.to(() => CabinAuditScreen());
           },
           child: Container(
-            padding:
-            EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
             decoration: BoxDecoration(
               color: _Colors.newAuditBtn,
               borderRadius: BorderRadius.circular(20.r),
@@ -252,29 +257,28 @@ class _CabinQualityAuditListScreenState
 
   // ── Audit List ───────────────────────────────────────────
   Widget _buildAuditList() {
-    return Obx(() => ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: controller.audits.length,
-      separatorBuilder: (_, __) =>
-          Divider(height: 1, color: _Colors.divider),
-      itemBuilder: (context, index) {
-        return _buildAuditCard(controller.audits[index]);
-      },
-    ));
+    return Obx(
+          () => ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: controller.audits.length,
+        separatorBuilder: (_, __) => Divider(height: 1, color: _Colors.divider),
+        itemBuilder: (context, index) {
+          return _buildAuditCard(controller.audits[index]);
+        },
+      ),
+    );
   }
 
   // ── Audit Card ───────────────────────────────────────────
   Widget _buildAuditCard(CabinAuditItem item) {
     return InkWell(
       onTap: () {
-        // Navigate to detail screen
         Get.to(() => const CabinQualityAuditScreen());
       },
       child: Container(
         color: _Colors.cardBg,
-        padding:
-        EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -285,10 +289,7 @@ class _CabinQualityAuditListScreenState
                   padding: EdgeInsets.all(3.r),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: _Colors.primary,
-                      width: 2.5.w,
-                    ),
+                    border: Border.all(color: _Colors.primary, width: 2.5.w),
                   ),
                   child: CircleAvatar(
                     radius: 26.r,
@@ -306,8 +307,7 @@ class _CabinQualityAuditListScreenState
                     decoration: BoxDecoration(
                       color: const Color(0xFF1DB954),
                       shape: BoxShape.circle,
-                      border:
-                      Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
                   ),
                 ),
@@ -344,8 +344,7 @@ class _CabinQualityAuditListScreenState
                         ),
                       ),
                       Padding(
-                        padding:
-                        EdgeInsets.symmetric(horizontal: 4.w),
+                        padding: EdgeInsets.symmetric(horizontal: 4.w),
                         child: Container(
                           width: 4.w,
                           height: 4.h,
@@ -406,8 +405,7 @@ class _CabinQualityAuditListScreenState
                         bottom: 0,
                         child: CircleAvatar(
                           radius: 12.r,
-                          backgroundImage:
-                          AssetImage(item.bottomAvatarImage!),
+                          backgroundImage: AssetImage(item.bottomAvatarImage!),
                           backgroundColor: Colors.grey.shade200,
                           onBackgroundImageError: (_, __) {},
                         ),
@@ -422,7 +420,7 @@ class _CabinQualityAuditListScreenState
     );
   }
 
-  // ── Location Image ────────────────────────────────────────
+  // ── Location Image ───────────────────────────────────────
   Widget _buildLocationImage(String imagePath) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8.r),
@@ -438,8 +436,11 @@ class _CabinQualityAuditListScreenState
             color: Colors.grey.shade200,
             borderRadius: BorderRadius.circular(8.r),
           ),
-          child: Icon(Icons.image_outlined,
-              color: Colors.grey.shade400, size: 22.sp),
+          child: Icon(
+            Icons.image_outlined,
+            color: Colors.grey.shade400,
+            size: 22.sp,
+          ),
         ),
       ),
     );

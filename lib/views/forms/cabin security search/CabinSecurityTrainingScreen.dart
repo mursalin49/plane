@@ -267,7 +267,7 @@ class _CabinSecurityScreenState
   Widget _buildTrainingCard(TrainingItem item) {
     return GestureDetector(
       onTap: () {
-        Get.to(() => CabinQualityAuditScreen());
+        // Get.to(() => CabinQualityAuditScreen());
       },
       child: Container(
         color: _Colors.cardBg,
