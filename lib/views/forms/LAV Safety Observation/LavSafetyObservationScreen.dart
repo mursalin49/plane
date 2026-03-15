@@ -163,11 +163,7 @@ class _LavSafetyObservationScreenState
         children: [
           GestureDetector(
             onTap: () => Get.back(),
-            child: Icon(
-              Icons.arrow_back,
-              color: _Colors.primary,
-              size: 22.sp,
-            ),
+            child: Icon(Icons.arrow_back, color: _Colors.primary, size: 22.sp),
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -182,7 +178,7 @@ class _LavSafetyObservationScreenState
           ),
           IconButton(
             icon: Icon(
-              Icons.more_vert,
+              Icons.tune_rounded,
               color: AppColors.mainAppColor,
               size: 24.sp,
             ),
@@ -191,7 +187,7 @@ class _LavSafetyObservationScreenState
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
             ),
-          )
+          ),
         ],
       ),
     );
@@ -256,11 +252,8 @@ class _LavSafetyObservationScreenState
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: controller.observations.length,
-        separatorBuilder: (_, __) => Divider(
-          height: 1,
-          color: _Colors.divider,
-          indent: 0,
-        ),
+        separatorBuilder: (_, __) =>
+            Divider(height: 1, color: _Colors.divider, indent: 0),
         itemBuilder: (context, index) {
           return _buildObservationCard(controller.observations[index]);
         },
@@ -279,168 +272,169 @@ class _LavSafetyObservationScreenState
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ✅ Observer Avatar with blue border + green dot
-          Stack(
-            children: [
-              Container(
-                padding: EdgeInsets.all(3.r), // ✅ blue border gap
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Color(0xFF3D5AFE), // ✅ blue border
-                    width: 2.5.w,
-                  ),
-                ),
-                child: CircleAvatar(
-                  radius: 26.r,
-                  backgroundImage: AssetImage(item.observerImage),
-                  backgroundColor: Colors.grey.shade200,
-                  onBackgroundImageError: (_, __) {},
-                ),
-              ),
-              // ✅ Green dot — bottom right
-              Positioned(
-                right: 2,
-                bottom: 2,
-                child: Container(
-                  width: 13.w,
-                  height: 13.h,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF1DB954), // ✅ green
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(width: 12.w),
-
-          // Middle content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ✅ Observer Avatar with blue border + green dot
+            Stack(
               children: [
-                SizedBox(height: 5.h),
-                Text(
-                  item.observerName,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _Colors.namePrimary,
+                Container(
+                  padding: EdgeInsets.all(3.r), // ✅ blue border gap
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Color(0xFF3D5AFE), // ✅ blue border
+                      width: 2.5.w,
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 26.r,
+                    backgroundImage: AssetImage(item.observerImage),
+                    backgroundColor: Colors.grey.shade200,
+                    onBackgroundImageError: (_, __) {},
                   ),
                 ),
-                SizedBox(height: 10.h),
-
-                // Date • Time
-                Row(
-                  children: [
-                    Text(
-                      item.date,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11.sp,
-                        color: _Colors.textGrey,
-                      ),
+                // ✅ Green dot — bottom right
+                Positioned(
+                  right: 2,
+                  bottom: 2,
+                  child: Container(
+                    width: 13.w,
+                    height: 13.h,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF1DB954), // ✅ green
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 5.w),
-                      child: Container(
-                        width: 4.w,
-                        height: 4.h,
-                        decoration: const BoxDecoration(
-                          color: _Colors.dotColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      item.time,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11.sp,
-                        color: _Colors.textGrey,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10.h),
-
-                // Gate
-                Text(
-                  item.gate,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _Colors.textDark,
-                  ),
-                ),
-                SizedBox(height: 10.h),
-
-                // Driver name
-                Text(
-                  'Driver: ${item.driverName}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.sp,
-                    color: _Colors.textGrey,
                   ),
                 ),
               ],
             ),
-          ),
-          SizedBox(width: 10.w),
+            SizedBox(width: 12.w),
 
-          // ✅ Replace single image with stacked two images
-          Column(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8.r),
-                child: Image.asset(
-                  item.locationImage,
-                  width: 64.w,
-                  height: 60.h,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
+            // Middle content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 5.h),
+                  Text(
+                    item.observerName,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: _Colors.namePrimary,
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+
+                  // Date • Time
+                  Row(
+                    children: [
+                      Text(
+                        item.date,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.sp,
+                          color: _Colors.textGrey,
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 5.w),
+                        child: Container(
+                          width: 4.w,
+                          height: 4.h,
+                          decoration: const BoxDecoration(
+                            color: _Colors.dotColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        item.time,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.sp,
+                          color: _Colors.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10.h),
+
+                  // Gate
+                  Text(
+                    item.gate,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: _Colors.textDark,
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+
+                  // Driver name
+                  Text(
+                    'Driver: ${item.driverName}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.sp,
+                      color: _Colors.textGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 10.w),
+
+            // ✅ Replace single image with stacked two images
+            Column(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8.r),
+                  child: Image.asset(
+                    item.locationImage,
                     width: 64.w,
                     height: 60.h,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Icon(
-                      Icons.image_outlined,
-                      color: Colors.grey.shade400,
-                      size: 24.sp,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 64.w,
+                      height: 60.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Icon(
+                        Icons.image_outlined,
+                        color: Colors.grey.shade400,
+                        size: 24.sp,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(height: 6.h),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8.r),
-                child: Image.asset(
-                  item.locationImage2,
-                  width: 64.w,
-                  height: 60.h,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
+                SizedBox(height: 6.h),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8.r),
+                  child: Image.asset(
+                    item.locationImage2,
                     width: 64.w,
                     height: 60.h,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Icon(
-                      Icons.image_outlined,
-                      color: Colors.grey.shade400,
-                      size: 24.sp,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 64.w,
+                      height: 60.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Icon(
+                        Icons.image_outlined,
+                        color: Colors.grey.shade400,
+                        size: 24.sp,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
-      ));
+    );
   }
 }

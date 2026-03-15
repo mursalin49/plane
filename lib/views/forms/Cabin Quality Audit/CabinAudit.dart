@@ -26,19 +26,60 @@ class _C {
 }
 
 // ─────────────────────────────────────────────
-// CHECK ITEMS PER AREA TYPE
+// CHECK ITEMS PER AREA TYPE  ← FIXED
 // ─────────────────────────────────────────────
 class AuditCheckItems {
-  static const List<String> allItems = [
+  // Area-specific sub-categories
+  static const Map<String, List<String>> areaItems = {
+    'lav': [
+      'Soap Dispenser',
+      'Trash / Bin',
+      'Mirror',
+      'Toilet / Bowl',
+      'Floor',
+      'Sink',
+      'Paper Towels',
+      'Air Freshener',
+    ],
+    'galley': [
+      'Trash',
+      'Counter / Surface',
+      'Oven / Microwave',
+      'Coffee Maker',
+      'Storage Compartments',
+      'Floor',
+    ],
+    'first_class': [
+      'Seat Recline',
+      'IFE Screen',
+      'Tray Table',
+      'Headrest / Pillow',
+      'Blanket',
+      'Seat Pocket',
+      'Armrest',
+      'Floor / Carpet',
+    ],
+    'comfort': [
+      'Seat',
+      'Tray Table',
+      'IFE Screen',
+      'Overhead Bin',
+      'Seat Pocket',
+      'Floor / Carpet',
+    ],
+    'main_cabin': [
+      'Seat Back Trash',
+      'Tray Table',
+      'IFE Screen',
+      'Floor / Carpet',
+      'Overhead Bin',
+      'Seat Pocket',
+      'Armrest',
+    ],
+  };
 
-    'Front LAVs',
-    'MID LAVs',
-    'AFT LAVs',
-    'Floor/Carpets',
-    'Seat Back Trash',
-    'Tray Tables',
-    'IFE Screens',
-  ];
+  static List<String> forArea(String areaType) =>
+      areaItems[areaType] ?? areaItems['main_cabin']!;
 }
 
 // ─────────────────────────────────────────────
@@ -318,30 +359,35 @@ class CabinAudit extends GetxController {
   void markSeat(String id, String status) => auditedSeats[id] = status;
   void clearSeat(String id) => auditedSeats.remove(id);
 
-  // New states for individual check items
+  // Per check-item images and tags
   final checkItemImages = <String, RxList<File>>{};
   final checkItemTags = <String, RxList<String>>{};
 
+  // ── FIXED: setCheckItem now auto-fails parent if any sub-item fails ──
   void setCheckItem(String seatId, String itemName, String status) {
     final key = '$seatId|$itemName';
     checkItemStatuses[key] = status;
-    
-    // Clear lists if N/A
+
     if (status == 'na') {
       checkItemImages.remove(key);
       checkItemTags.remove(key);
     }
-    
-    // Derive overall seat status from check items
+
+    // Derive overall seat status — ANY fail = parent fails
     final itemsForSeat = checkItemStatuses.keys
         .where((k) => k.startsWith('$seatId|'))
         .toList();
+
     final hasAnyFail = itemsForSeat.any((k) => checkItemStatuses[k] == 'fail');
     final hasAnyPass = itemsForSeat.any((k) => checkItemStatuses[k] == 'pass');
+
     if (hasAnyFail) {
       auditedSeats[seatId] = 'fail';
     } else if (hasAnyPass) {
       auditedSeats[seatId] = 'pass';
+    } else {
+      // All N/A → reset to unaudited
+      auditedSeats.remove(seatId);
     }
   }
 
@@ -349,14 +395,18 @@ class CabinAudit extends GetxController {
     return checkItemStatuses['$seatId|$itemName'] ?? 'na';
   }
 
-  /// Detect which section a seat belongs to based on row number
+  // ── FIXED: Determine area type for the given seat/amenity ID ──
   String getSectionForSeat(String seatId) {
-    // amenity IDs
-    if (seatId.startsWith('LAV') || seatId == 'Closet') return 'lav';
-    if (seatId.startsWith('Galley')) return 'galley';
+    final idLower = seatId.toLowerCase();
 
-    // parse row number
-    final rowStr = seatId.replaceAll(RegExp(r'[A-Za-z]'), '');
+    // LAV / restroom amenity IDs
+    if (idLower.contains('lav') || idLower == 'closet') return 'lav';
+
+    // Galley amenity IDs
+    if (idLower.contains('galley')) return 'galley';
+
+    // Parse row number from seat IDs like "14A", "3B"
+    final rowStr = seatId.replaceAll(RegExp(r'[A-Za-z\s]'), '');
     final rowNum = int.tryParse(rowStr) ?? 0;
 
     final map = currentAircraftMap;
@@ -373,17 +423,33 @@ class CabinAudit extends GetxController {
     return 'main_cabin';
   }
 
+  // ── FIXED: Returns area-specific check items ──
   List<String> getCheckItemsForSeat(String seatId) {
-    return AuditCheckItems.allItems;
+    final areaType = getSectionForSeat(seatId);
+    return AuditCheckItems.forArea(areaType);
+  }
+
+  // ── FIXED: Returns the display title for the bottom sheet ──
+  // Shows the actual area/seat ID as the primary title
+  // and a friendly category label as subtitle
+  String getAreaTitle(String seatId) {
+    return seatId; // e.g. "LAV FWD", "14A", "Galley AFT"
   }
 
   String getSectionLabel(String seatId) {
     final section = getSectionForSeat(seatId);
-    if (section == 'lav') return 'Lav / Restroom';
-    if (section == 'galley') return 'Galley';
-    if (section == 'first_class') return 'First Class';
-    if (section == 'comfort') return 'Comfort+';
-    return 'Main Cabin';
+    switch (section) {
+      case 'lav':
+        return 'Lav / Restroom';
+      case 'galley':
+        return 'Galley';
+      case 'first_class':
+        return 'First Class';
+      case 'comfort':
+        return 'Comfort+';
+      default:
+        return 'Main Cabin';
+    }
   }
 }
 
@@ -493,7 +559,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                 SizedBox(height: 16.h),
                 _label('Gate *'),
                 Obx(
-                      () => _pillDropdown(
+                  () => _pillDropdown(
                     value: _ctrl.selectedGate.value,
                     items: _ctrl.gateOptions,
                     onChanged: (v) => _ctrl.selectedGate.value = v!,
@@ -502,7 +568,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                 SizedBox(height: 16.h),
                 _label('Type of Clean *'),
                 Obx(
-                      () => _pillDropdown(
+                  () => _pillDropdown(
                     value: _ctrl.selectedCleanType.value,
                     items: _ctrl.cleanTypeOptions,
                     onChanged: (v) => _ctrl.selectedCleanType.value = v!,
@@ -537,11 +603,9 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                   ),
                 ),
                 SizedBox(height: 16.h),
-
-                // Type of Aircraft
                 _label('Type of Aircraft *'),
                 Obx(
-                      () => _pillDropdown(
+                  () => _pillDropdown(
                     value: _ctrl.selectedAircraft.value,
                     items: _ctrl.aircraftOptions,
                     onChanged: (v) => _ctrl.selectedAircraft.value = v!,
@@ -549,12 +613,8 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                   ),
                 ),
                 SizedBox(height: 20.h),
-
-                // Legend
                 _buildLegend(),
                 SizedBox(height: 16.h),
-
-                // Seat map
                 _buildSeatMap(),
                 SizedBox(height: 16.h),
               ],
@@ -615,50 +675,49 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                 _uploadBox(),
                 SizedBox(height: 12.h),
                 Obx(
-                      () => _selectedImages.isEmpty
+                  () => _selectedImages.isEmpty
                       ? const SizedBox.shrink()
                       : Wrap(
-                    spacing: 8.w,
-                    runSpacing: 8.h,
-                    children: _selectedImages.map((file) {
-                      return Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8.r),
-                            child: Image.file(
-                              file,
-                              width: 80.w,
-                              height: 80.w,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: GestureDetector(
-                              onTap: () => _selectedImages.remove(file),
-                              child: Container(
-                                padding: EdgeInsets.all(2.r),
-                                decoration: const BoxDecoration(
-                                  color: Colors.black54,
-                                  shape: BoxShape.circle,
+                          spacing: 8.w,
+                          runSpacing: 8.h,
+                          children: _selectedImages.map((file) {
+                            return Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  child: Image.file(
+                                    file,
+                                    width: 80.w,
+                                    height: 80.w,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                                child: Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 14.sp,
+                                Positioned(
+                                  top: 4,
+                                  right: 4,
+                                  child: GestureDetector(
+                                    onTap: () => _selectedImages.remove(file),
+                                    child: Container(
+                                      padding: EdgeInsets.all(2.r),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 14.sp,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
                 ),
                 SizedBox(height: 16.h),
-                
-                // Digital Signature Section
+                // Digital Signature
                 Container(
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
@@ -681,7 +740,11 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.draw_rounded, color: _C.primary, size: 20.sp),
+                              Icon(
+                                Icons.draw_rounded,
+                                color: _C.primary,
+                                size: 20.sp,
+                              ),
                               SizedBox(width: 8.w),
                               Text(
                                 'Digital Signature',
@@ -704,7 +767,10 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                           GestureDetector(
                             onTap: () => signatureController.clear(),
                             child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 6.h,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.red.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8.r),
@@ -727,7 +793,10 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: const Color(0xFFF9FAFB),
-                            border: Border.all(color: _C.primary.withOpacity(0.3), width: 1.5),
+                            border: Border.all(
+                              color: _C.primary.withOpacity(0.3),
+                              width: 1.5,
+                            ),
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Stack(
@@ -790,7 +859,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                     SizedBox(height: 12.h),
                   ],
                   ...aircraftMap.sections.map(
-                        (section) => _buildSection(section),
+                    (section) => _buildSection(section),
                   ),
                   SizedBox(height: 40.h),
                 ],
@@ -840,7 +909,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
         SizedBox(height: 16.h),
         if (section.amenitiesAfter != null)
           ...section.amenitiesAfter!.map(
-                (amenity) => _buildAmenityRow(
+            (amenity) => _buildAmenityRow(
               leftSvg: amenity.leftSvg,
               leftId: amenity.leftId,
               rightSvg: amenity.rightSvg,
@@ -859,7 +928,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
       child: Stack(
         alignment: Alignment.center,
         children: List.generate(9, (i) {
-          final radius = 72.0;
+          const radius = 72.0;
           final x = -radius * (1 - 2 * i / 8);
           final y = -radius * 0.6 * (0.5 - (i / 8 - 0.5).abs());
           final tilt = (i / 8 - 0.5) * 60;
@@ -890,21 +959,21 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
         children: cols
             .map(
               (c) => c.isEmpty
-              ? SizedBox(width: 28.w)
-              : SizedBox(
-            width: 34.w,
-            child: Center(
-              child: Text(
-                c,
-                style: GoogleFonts.dmSans(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w600,
-                  color: _C.grey,
-                ),
-              ),
-            ),
-          ),
-        )
+                  ? SizedBox(width: 28.w)
+                  : SizedBox(
+                      width: 34.w,
+                      child: Center(
+                        child: Text(
+                          c,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: _C.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+            )
             .toList(),
       ),
     );
@@ -921,7 +990,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           ...leftCols.map(
-                (col) => col.isEmpty ? SizedBox(width: 34.w) : _seat('$rowNum$col'),
+            (col) => col.isEmpty ? SizedBox(width: 34.w) : _seat('$rowNum$col'),
           ),
           SizedBox(
             width: 28.w,
@@ -937,7 +1006,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
             ),
           ),
           ...rightCols.map(
-                (col) => col.isEmpty ? SizedBox(width: 34.w) : _seat('$rowNum$col'),
+            (col) => col.isEmpty ? SizedBox(width: 34.w) : _seat('$rowNum$col'),
           ),
         ],
       ),
@@ -1092,13 +1161,16 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
   }
 
   // ─────────────────────────────────────────────
-  // SEAT SHEET — Real check items per section
+  // SEAT / AREA BOTTOM SHEET  ← FIXED
   // ─────────────────────────────────────────────
   void _showSeatSheet(String id) {
     final checkItems = _ctrl.getCheckItemsForSeat(id);
-    final sectionLabel = _ctrl.getSectionLabel(id);
 
-    // sheet-local per-item statuses
+    // ── FIXED: Title = actual area ID (e.g. "LAV FWD", "14A") ──
+    final areaTitle = _ctrl.getAreaTitle(id);
+    // ── Subtitle = friendly category label ──
+    final categoryLabel = _ctrl.getSectionLabel(id);
+
     final Map<String, RxString> itemStatuses = {
       for (final item in checkItems) item: _ctrl.getCheckItem(id, item).obs,
     };
@@ -1142,24 +1214,24 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                   ),
                 ),
 
-                // scrollable content
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title
+                        // ── FIXED: Show actual area ID as big title ──
                         Text(
-                          sectionLabel,
+                          areaTitle,
                           style: GoogleFonts.dmSans(
-                            fontSize: 20.sp,
+                            fontSize: 22.sp,
                             fontWeight: FontWeight.w700,
                             color: _C.primary,
                           ),
                         ),
+                        // ── Category label as subtitle ──
                         Text(
-                          'Seat / Area: $id',
+                          categoryLabel,
                           style: GoogleFonts.dmSans(
                             fontSize: 13.sp,
                             color: _C.grey,
@@ -1176,7 +1248,8 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                           ),
                           child: Text(
                             'Mark each item Pass, Fail, or N/A. '
-                                'Items not checked are N/A by default.',
+                            'Items not checked are N/A by default. '
+                            'Any failed item will automatically fail this area.',
                             style: GoogleFonts.dmSans(
                               fontSize: 11.sp,
                               color: _C.grey,
@@ -1186,7 +1259,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                         ),
                         SizedBox(height: 20.h),
 
-                        // Check Items List
+                        // ── Check Items List ──
                         ...checkItems.map((item) {
                           return Obx(() {
                             final status = itemStatuses[item]!.value;
@@ -1198,10 +1271,12 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                               onPass: () => ss(() {
                                 itemStatuses[item]!.value = 'pass';
                                 _ctrl.checkItemStatuses['$id|$item'] = 'pass';
+                                _ctrl.setCheckItem(id, item, 'pass');
                               }),
                               onFail: () => ss(() {
                                 itemStatuses[item]!.value = 'fail';
                                 _ctrl.checkItemStatuses['$id|$item'] = 'fail';
+                                _ctrl.setCheckItem(id, item, 'fail');
                               }),
                               onNA: () => ss(() {
                                 itemStatuses[item]!.value = 'na';
@@ -1213,14 +1288,14 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
 
                         SizedBox(height: 20.h),
 
-                        // Upload Images
+                        // Upload Images (area-level)
                         _sheetLabel('Upload Images (optional)'),
                         _uploadRow(onTap: pickImages),
                         SizedBox(height: 10.h),
                         _thumbsRow(seatImages),
                         SizedBox(height: 16.h),
 
-                        // Notes
+                        // Notes (area-level)
                         _sheetLabel('Notes / Findings (optional)'),
                         _uncleanedField(ctrl: notesCtrl, tags: tags),
                         SizedBox(height: 20.h),
@@ -1229,7 +1304,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                   ),
                 ),
 
-                // Cancel / Apply
+                // Cancel / Apply buttons
                 Container(
                   padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
                   decoration: BoxDecoration(
@@ -1309,7 +1384,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
     );
   }
 
-  // ── Check Item Row ───────────────────────────
+  // ── Check Item Row  ← FIXED: image + hashtag show on pass OR fail ──
   Widget _buildCheckItemRow({
     required String seatId,
     required String itemName,
@@ -1320,10 +1395,13 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
     required VoidCallback onNA,
   }) {
     final key = '$seatId|$itemName';
+    // Show upload + hashtag when pass or fail (not N/A)
     final hasDetails = status == 'pass' || status == 'fail';
 
-    // Initialize lists in controller if needed
-    final imagesList = ctrl.checkItemImages.putIfAbsent(key, () => <File>[].obs);
+    final imagesList = ctrl.checkItemImages.putIfAbsent(
+      key,
+      () => <File>[].obs,
+    );
     final tagsList = ctrl.checkItemTags.putIfAbsent(key, () => <String>[].obs);
 
     final picker = ImagePicker();
@@ -1365,30 +1443,31 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
               _miniStatusBtn('N/A', status == 'na', _C.grey, onNA),
             ],
           ),
-          
+
+          // ── Image upload + hashtag per check item ──
           if (hasDetails) ...[
             SizedBox(height: 12.h),
-            _sheetLabel('Upload specific images for $itemName:'),
-            _uploadRow(onTap: () async {
-              final picked = await picker.pickMultiImage();
-              if (picked.isNotEmpty) {
-                imagesList.addAll(picked.map((x) => File(x.path)));
-              }
-            }),
+            _sheetLabel('Upload image for "$itemName":'),
+            _uploadRow(
+              onTap: () async {
+                final picked = await picker.pickMultiImage();
+                if (picked.isNotEmpty) {
+                  imagesList.addAll(picked.map((x) => File(x.path)));
+                }
+              },
+            ),
             SizedBox(height: 10.h),
             _thumbsRow(imagesList),
             SizedBox(height: 10.h),
             _sheetLabel('Select Hashtags:'),
             _itemHashtagField(tags: tagsList),
-          ]
+          ],
         ],
       ),
     );
   }
 
-  Widget _itemHashtagField({
-    required RxList<String> tags,
-  }) {
+  Widget _itemHashtagField({required RxList<String> tags}) {
     return Container(
       decoration: BoxDecoration(
         color: _C.white,
@@ -1408,11 +1487,16 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                       runSpacing: 8.h,
                       children: tags.map((tag) {
                         return Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 4.h,
+                          ),
                           decoration: BoxDecoration(
                             color: _C.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(16.r),
-                            border: Border.all(color: _C.primary.withValues(alpha: 0.3)),
+                            border: Border.all(
+                              color: _C.primary.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1428,7 +1512,11 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                               SizedBox(width: 4.w),
                               GestureDetector(
                                 onTap: () => tags.remove(tag),
-                                child: Icon(Icons.close, size: 14.sp, color: _C.primary),
+                                child: Icon(
+                                  Icons.close,
+                                  size: 14.sp,
+                                  color: _C.primary,
+                                ),
                               ),
                             ],
                           ),
@@ -1437,14 +1525,13 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                     ),
                   ),
           ),
-          
           Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: tags.isEmpty ? BorderRadius.circular(20.r) : BorderRadius.vertical(bottom: Radius.circular(20.r)),
-              onTap: () {
-                _showPredefinedTagsModal(tags);
-              },
+              borderRadius: tags.isEmpty
+                  ? BorderRadius.circular(20.r)
+                  : BorderRadius.vertical(bottom: Radius.circular(20.r)),
+              onTap: () => _showPredefinedTagsModal(tags),
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                 child: Row(
@@ -1470,10 +1557,18 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
 
   void _showPredefinedTagsModal(RxList<String> tags) {
     final predefinedTags = [
-      '#Dirty', '#Broken', '#Missing', '#Stained', '#Replaced',
-      '#Scratched', '#Malfunctioning', '#Torn', '#Wet', '#NeedsCleaning'
+      '#Dirty',
+      '#Broken',
+      '#Missing',
+      '#Stained',
+      '#Replaced',
+      '#Scratched',
+      '#Malfunctioning',
+      '#Torn',
+      '#Wet',
+      '#NeedsCleaning',
     ];
-    
+
     Get.bottomSheet(
       Container(
         padding: EdgeInsets.all(20.w),
@@ -1509,7 +1604,10 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                       }
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 8.h,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected ? _C.primary : _C.bg,
                         borderRadius: BorderRadius.circular(20.r),
@@ -1522,7 +1620,9 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                         style: GoogleFonts.dmSans(
                           fontSize: 13.sp,
                           color: isSelected ? Colors.white : _C.dark,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -1530,6 +1630,7 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                 });
               }).toList(),
             ),
+            SizedBox(height: 12.h),
           ],
         ),
       ),
@@ -1537,11 +1638,11 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
   }
 
   Widget _miniStatusBtn(
-      String label,
-      bool selected,
-      Color color,
-      VoidCallback onTap,
-      ) {
+    String label,
+    bool selected,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -1559,89 +1660,6 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
             fontWeight: FontWeight.w700,
             color: selected ? Colors.white : _C.grey,
           ),
-        ),
-      ),
-    );
-  }
-
-  // ── Status row (Pass / Fail / N/A) ───────────
-  Widget _statusRow({
-    required String status,
-    required VoidCallback onPass,
-    required VoidCallback onFail,
-    required VoidCallback onNA,
-  }) {
-    return Row(
-      children: [
-        Expanded(
-          child: _statusBtn(
-            label: 'Pass',
-            icon: Icons.check,
-            selected: status == 'pass',
-            activeColor: _C.green,
-            onTap: onPass,
-          ),
-        ),
-        SizedBox(width: 10.w),
-        Expanded(
-          child: _statusBtn(
-            label: 'Fail',
-            icon: Icons.close,
-            selected: status == 'fail',
-            activeColor: _C.red,
-            onTap: onFail,
-          ),
-        ),
-        SizedBox(width: 10.w),
-        Expanded(
-          child: _statusBtn(
-            label: 'N/A',
-            icon: null,
-            selected: status == 'na',
-            activeColor: _C.primary,
-            onTap: onNA,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _statusBtn({
-    required String label,
-    required IconData? icon,
-    required bool selected,
-    required Color activeColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        height: 44.h,
-        decoration: BoxDecoration(
-          color: selected ? activeColor : _C.white,
-          borderRadius: BorderRadius.circular(22.r),
-          border: Border.all(
-            color: selected ? activeColor : _C.border,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 18.sp, color: selected ? Colors.white : _C.grey),
-              SizedBox(width: 5.w),
-            ],
-            Text(
-              label,
-              style: GoogleFonts.dmSans(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: selected ? Colors.white : _C.grey,
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -1676,55 +1694,55 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
   // ── Thumbnails horizontal row ────────────────
   Widget _thumbsRow(RxList<File> imgs) {
     return Obx(
-          () => imgs.isEmpty
+      () => imgs.isEmpty
           ? const SizedBox.shrink()
           : SizedBox(
-        height: 76.h,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: imgs.length,
-          itemBuilder: (_, i) => Stack(
-            children: [
-              Container(
-                width: 68.w,
-                height: 68.h,
-                margin: EdgeInsets.only(right: 8.w),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(color: _C.border, width: 1),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.r),
-                  child: Image.file(imgs[i], fit: BoxFit.cover),
+              height: 76.h,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: imgs.length,
+                itemBuilder: (_, i) => Stack(
+                  children: [
+                    Container(
+                      width: 68.w,
+                      height: 68.h,
+                      margin: EdgeInsets.only(right: 8.w),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(color: _C.border, width: 1),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8.r),
+                        child: Image.file(imgs[i], fit: BoxFit.cover),
+                      ),
+                    ),
+                    Positioned(
+                      top: 2,
+                      right: 10,
+                      child: GestureDetector(
+                        onTap: () => imgs.removeAt(i),
+                        child: Container(
+                          padding: EdgeInsets.all(2.r),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 13.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Positioned(
-                top: 2,
-                right: 10,
-                child: GestureDetector(
-                  onTap: () => imgs.removeAt(i),
-                  child: Container(
-                    padding: EdgeInsets.all(2.r),
-                    decoration: const BoxDecoration(
-                      color: Colors.black54,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 13.sp,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
-  // ── Uncleaned part (hashtag chips + notes) ───
+  // ── Notes field with hashtag chips ──────────
   Widget _uncleanedField({
     required TextEditingController ctrl,
     required RxList<String> tags,
@@ -1739,49 +1757,49 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Obx(
-                () => tags.isEmpty
+            () => tags.isEmpty
                 ? const SizedBox.shrink()
                 : Container(
-              padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 4.h),
-              child: Wrap(
-                spacing: 8.w,
-                runSpacing: 8.h,
-                children: tags.map((tag) {
-                  return Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 6.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _C.primary,
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          tag,
-                          style: GoogleFonts.dmSans(
-                            fontSize: 12.sp,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
+                    padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 4.h),
+                    child: Wrap(
+                      spacing: 8.w,
+                      runSpacing: 8.h,
+                      children: tags.map((tag) {
+                        return Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 6.h,
                           ),
-                        ),
-                        SizedBox(width: 6.w),
-                        GestureDetector(
-                          onTap: () => tags.remove(tag),
-                          child: Icon(
-                            Icons.close,
-                            size: 13.sp,
-                            color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: _C.primary,
+                            borderRadius: BorderRadius.circular(6.r),
                           ),
-                        ),
-                      ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                tag,
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 12.sp,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(width: 6.w),
+                              GestureDetector(
+                                onTap: () => tags.remove(tag),
+                                child: Icon(
+                                  Icons.close,
+                                  size: 13.sp,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
+                  ),
           ),
           TextField(
             controller: ctrl,
@@ -1826,11 +1844,11 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
           ),
           children: required
               ? [
-            TextSpan(
-              text: ' *',
-              style: TextStyle(color: _C.red),
-            ),
-          ]
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(color: _C.red),
+                  ),
+                ]
               : [],
         ),
       ),
@@ -2055,10 +2073,10 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
           ],
         ),
         content: Text(
-          'The system randomly selects audit areas. '
-              'Tap any highlighted (blue) seat or area to audit it. '
-              'Mark each check item as Pass, Fail, or N/A. '
-              'Items not audited are automatically N/A.',
+          'Tap any seat or area to audit it. '
+          'Mark each sub-item as Pass, Fail, or N/A. '
+          'If any sub-item fails, the area is automatically marked Fail. '
+          'Items not audited are N/A by default.',
           style: GoogleFonts.dmSans(
             fontSize: 13.sp,
             color: _C.grey,

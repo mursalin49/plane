@@ -188,7 +188,7 @@ class _CabinQualityAuditListScreenState
           // Three dot menu
           IconButton(
             icon: Icon(
-              Icons.more_vert,
+              Icons.tune_rounded,
               color: AppColors.mainAppColor,
               size: 24.sp,
             ),
@@ -258,7 +258,7 @@ class _CabinQualityAuditListScreenState
   // ── Audit List ───────────────────────────────────────────
   Widget _buildAuditList() {
     return Obx(
-          () => ListView.separated(
+      () => ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: controller.audits.length,
