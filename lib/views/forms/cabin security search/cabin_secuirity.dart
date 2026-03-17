@@ -53,14 +53,196 @@ const List<String> kCabinAreas = [
 const int kMaxImageBytes = 100 * 1024 * 1024;
 
 // ─────────────────────────────────────────────
+// SUBCATEGORY ITEMS PER AREA
+// ─────────────────────────────────────────────
+class CabinSecurityCheckItems {
+  static const Map<String, List<String>> areaItems = {
+    'Front Galley': [
+      'Counter / Surface',
+      'Storage Compartments',
+      'Oven / Microwave',
+      'Coffee Maker',
+      'Trash',
+      'Floor',
+    ],
+    'Rear Galley': [
+      'Counter / Surface',
+      'Storage Compartments',
+      'Oven / Microwave',
+      'Trash',
+      'Floor',
+    ],
+    'First Class': [
+      'Seat Cushion',
+      'Seat Back Pocket',
+      'Overhead Bin',
+      'Tray Table',
+      'Armrest',
+      'Under Seat',
+      'IFE Unit',
+    ],
+    'Delta Comfort': [
+      'Seat Cushion',
+      'Seat Back Pocket',
+      'Overhead Bin',
+      'Tray Table',
+      'Under Seat',
+      'Floor / Carpet',
+    ],
+    'Main Cabin': [
+      'Seat Cushion',
+      'Seat Back Pocket',
+      'Overhead Bin',
+      'Tray Table',
+      'Under Seat',
+      'Floor / Carpet',
+      'Armrest',
+    ],
+    'FWD LAV': [
+      'Trash Bin',
+      'Under Sink',
+      'Mirror / Cabinet',
+      'Toilet Area',
+      'Floor',
+      'Counter',
+    ],
+    'MID LAV L': [
+      'Trash Bin',
+      'Under Sink',
+      'Mirror / Cabinet',
+      'Toilet Area',
+      'Floor',
+      'Counter',
+    ],
+    'MID LAV R': [
+      'Trash Bin',
+      'Under Sink',
+      'Mirror / Cabinet',
+      'Toilet Area',
+      'Floor',
+      'Counter',
+    ],
+    'AFT LAV L': [
+      'Trash Bin',
+      'Under Sink',
+      'Mirror / Cabinet',
+      'Toilet Area',
+      'Floor',
+      'Counter',
+    ],
+    'AFT LAV R': [
+      'Trash Bin',
+      'Under Sink',
+      'Mirror / Cabinet',
+      'Toilet Area',
+      'Floor',
+      'Counter',
+    ],
+    'Overhead Bins': [
+      'Bin Row 1–6',
+      'Bin Row 7–14',
+      'Bin Row 15–22',
+      'Bin Row 23–33',
+      'Bin Row 34–49',
+    ],
+    'Seat Pockets': [
+      'Row 1–10 Pockets',
+      'Row 11–20 Pockets',
+      'Row 21–30 Pockets',
+      'Row 31–49 Pockets',
+    ],
+    'Crew Rest Area': [
+      'Bunk / Rest Surface',
+      'Storage Compartment',
+      'Curtain / Entry',
+      'Floor',
+    ],
+    'Emergency Equipment': [
+      'Life Vests Under Seats',
+      'O2 Masks Access Panel',
+      'Emergency Exit Slides',
+      'Fire Extinguisher',
+      'First Aid Kit',
+    ],
+  };
+
+  static List<String> forArea(String area) =>
+      areaItems[area] ?? ['General Check'];
+}
+
+// ─────────────────────────────────────────────
 // AREA CARD MODEL
 // ─────────────────────────────────────────────
+class SubItemStatus {
+  final String itemName;
+  String status; // 'pass' | 'fail' | ''
+  SubItemStatus({required this.itemName}) : status = '';
+}
+
 class AreaCard {
   final String areaName;
-  String status;
-  List<File> images;
+  String status; // overall: 'pass' | 'fail' | ''
+  List<File> images; // hide-phase images (uploaded before hiding)
+  List<File> auditImages; // audit-phase images (uploaded when marking)
+  List<SubItemStatus> subItems;
+  bool imageUploaded; // true once >= 1 hide-phase image uploaded
 
-  AreaCard({required this.areaName}) : status = '', images = [];
+  AreaCard({required this.areaName})
+    : status = '',
+      images = [],
+      auditImages = [],
+      imageUploaded = false,
+      subItems = CabinSecurityCheckItems.forArea(
+        areaName,
+      ).map((n) => SubItemStatus(itemName: n)).toList();
+
+  /// overall = fail if ANY subitem fails, pass if ALL pass, else empty
+  String get computedStatus {
+    if (subItems.any((s) => s.status == 'fail')) return 'fail';
+    if (subItems.every((s) => s.status == 'pass')) return 'pass';
+    return '';
+  }
+
+  double get scorePercent {
+    final done = subItems.where((s) => s.status.isNotEmpty).toList();
+    if (done.isEmpty) return 0;
+    return (done.where((s) => s.status == 'pass').length / done.length) * 100;
+  }
+}
+
+// ─────────────────────────────────────────────
+// SHARED RESULT MODELS
+// ─────────────────────────────────────────────
+class CabinSecuritySubItem {
+  final String name;
+  final String status; // 'pass' | 'fail' | ''
+
+  CabinSecuritySubItem({required this.name, required this.status});
+}
+
+class CabinSecurityAreaResult {
+  final String area;
+  final String status;
+  final List<CabinSecuritySubItem> subItems;
+  final List<String> pictures;
+
+  CabinSecurityAreaResult({
+    required this.area,
+    required this.status,
+    this.subItems = const [],
+    this.pictures = const [],
+  });
+
+  int get passCount => subItems.where((c) => c.status == 'pass').length;
+  int get failCount => subItems.where((c) => c.status == 'fail').length;
+  int get naCount => subItems.where((c) => c.status.isEmpty).length;
+
+  double get scorePercent {
+    final applicable = subItems.where((c) => c.status.isNotEmpty).toList();
+    if (applicable.isEmpty) return status == 'pass' ? 100 : 0;
+    final passed = applicable.where((c) => c.status == 'pass').length;
+    return (passed / applicable.length) * 100;
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -145,6 +327,10 @@ class CabinQualityController extends GetxController {
 
   final RxSet<String> selectedSeatIds = <String>{}.obs;
 
+  // Reactive trackers so Obx re-renders when image uploaded or subitem changes
+  final RxMap<String, bool> imageUploadedMap = <String, bool>{}.obs;
+  final RxInt subItemVersion = 0.obs; // increment to force Obx refresh
+
   final sec1Expanded = true.obs;
   final sec2Expanded = true.obs;
   final sec3Expanded = true.obs;
@@ -185,7 +371,10 @@ class CabinQualityController extends GetxController {
     if (selectedGate.value == 'Please Select One') return false;
     if (shipNumber.value.trim().isEmpty) return false;
     if (selectedAreas.isEmpty) return false;
-    if (areaCards.any((c) => c.status.isEmpty)) return false;
+    // Every area must have at least 1 hide-image and all subitems marked
+    if (areaCards.any((c) => !c.imageUploaded)) return false;
+    if (areaCards.any((c) => c.subItems.any((s) => s.status.isEmpty)))
+      return false;
     return true;
   }
 
@@ -195,8 +384,10 @@ class CabinQualityController extends GetxController {
     if (shipNumber.value.trim().isEmpty) return 'Please enter the Ship #.';
     if (selectedAreas.isEmpty)
       return 'Please select at least one area to inspect.';
-    if (areaCards.any((c) => c.status.isEmpty))
-      return 'Please mark Pass or Fail for all selected areas.';
+    if (areaCards.any((c) => !c.imageUploaded))
+      return 'Please upload a hiding photo for all selected areas.';
+    if (areaCards.any((c) => c.subItems.any((s) => s.status.isEmpty)))
+      return 'Please mark Pass or Fail for all subcategory items.';
     return '';
   }
 
@@ -229,18 +420,34 @@ class CabinQualityController extends GetxController {
   void removeArea(String area) {
     selectedAreas.remove(area);
     areaCards.removeWhere((c) => c.areaName == area);
-    selectedSeatIds.removeWhere((id) => _seatAreaLabel(id) == area);
+    imageUploadedMap.remove(area);
+    selectedSeatIds.removeWhere((id) => _tagForSeatId(id) == area);
+  }
+
+  /// Returns the unique tag label for a seat/amenity.
+  /// For LAV / Galley → use the area name (one per amenity).
+  /// For seats → "Seat <id>" so each seat gets its own card.
+  String _tagForSeatId(String seatId) {
+    if (seatId.startsWith('LAV') || seatId == 'Closet') {
+      return _seatAreaLabel(seatId); // e.g. "FWD LAV"
+    }
+    if (seatId.startsWith('Galley')) {
+      return _seatAreaLabel(seatId); // e.g. "Front Galley"
+    }
+    // Regular seat — unique tag per seat
+    return 'Seat $seatId'; // e.g. "Seat 1A", "Seat 3B"
   }
 
   void toggleSeatArea(String seatId) {
-    final label = _seatAreaLabel(seatId);
+    final tag = _tagForSeatId(seatId);
     if (selectedSeatIds.contains(seatId)) {
+      // Deselect seat → remove its unique tag & card
       selectedSeatIds.remove(seatId);
-      final stillHas = selectedSeatIds.any((id) => _seatAreaLabel(id) == label);
-      if (!stillHas) removeArea(label);
+      removeArea(tag);
     } else {
+      // Select seat → add unique tag & card
       selectedSeatIds.add(seatId);
-      addArea(label);
+      addArea(tag);
     }
   }
 
@@ -277,8 +484,21 @@ class CabinQualityController extends GetxController {
       areaCards.refresh();
     }
     for (final seatId in selectedSeatIds) {
-      if (_seatAreaLabel(seatId) == area) {
+      if (_tagForSeatId(seatId) == area) {
         auditedSeats[seatId] = status;
+      }
+    }
+  }
+
+  /// Called by setSubItemStatus to keep seat map in sync
+  void _syncSeatMapForArea(String area) {
+    final card = areaCards.firstWhereOrNull((c) => c.areaName == area);
+    if (card == null) return;
+    final computed = card.computedStatus;
+    if (computed.isEmpty) return;
+    for (final seatId in selectedSeatIds) {
+      if (_tagForSeatId(seatId) == area) {
+        auditedSeats[seatId] = computed;
       }
     }
   }
@@ -287,6 +507,8 @@ class CabinQualityController extends GetxController {
     final card = areaCards.firstWhereOrNull((c) => c.areaName == area);
     if (card != null) {
       card.images.add(file);
+      card.imageUploaded = true;
+      imageUploadedMap[area] = true; // reactive update
       areaCards.refresh();
     }
   }
@@ -295,7 +517,45 @@ class CabinQualityController extends GetxController {
     final card = areaCards.firstWhereOrNull((c) => c.areaName == area);
     if (card != null) {
       card.images.removeAt(index);
+      if (card.images.isEmpty) {
+        card.imageUploaded = false;
+        imageUploadedMap[area] = false;
+      }
       areaCards.refresh();
+    }
+  }
+
+  // ── Audit-phase image (uploaded when marking pass/fail) ──
+  void addAreaAuditImage(String area, File file) {
+    final card = areaCards.firstWhereOrNull((c) => c.areaName == area);
+    if (card != null) {
+      card.auditImages.add(file);
+      subItemVersion.value++;
+      areaCards.refresh();
+    }
+  }
+
+  void removeAreaAuditImage(String area, int index) {
+    final card = areaCards.firstWhereOrNull((c) => c.areaName == area);
+    if (card != null) {
+      card.auditImages.removeAt(index);
+      subItemVersion.value++;
+      areaCards.refresh();
+    }
+  }
+
+  // ── Subitem status ───────────────────────────────────────
+  void setSubItemStatus(String area, String itemName, String status) {
+    final card = areaCards.firstWhereOrNull((c) => c.areaName == area);
+    if (card != null) {
+      final sub = card.subItems.firstWhereOrNull((s) => s.itemName == itemName);
+      if (sub != null) {
+        sub.status = status;
+        card.status = card.computedStatus;
+        subItemVersion.value++; // force Obx re-render
+        areaCards.refresh();
+        _syncSeatMapForArea(area);
+      }
     }
   }
 
@@ -815,10 +1075,23 @@ class _CabinQualityAuditScreenNState extends State<CabinQualityAuditScreenN> {
             );
             return;
           }
-          if (_ctrl.areaCards.any((c) => c.status.isEmpty)) {
+          if (_ctrl.areaCards.any((c) => !c.imageUploaded)) {
+            Get.snackbar(
+              'Missing Photo',
+              'Please upload a hiding photo for every selected area before continuing.',
+              backgroundColor: _C.red,
+              colorText: Colors.white,
+              snackPosition: SnackPosition.TOP,
+              duration: const Duration(seconds: 3),
+            );
+            return;
+          }
+          if (_ctrl.areaCards.any(
+            (c) => c.subItems.any((s) => s.status.isEmpty),
+          )) {
             Get.snackbar(
               'Incomplete',
-              'Please mark Pass or Fail for all selected areas.',
+              'Please mark Pass or Fail for all subcategory items in each area.',
               backgroundColor: _C.red,
               colorText: Colors.white,
               snackPosition: SnackPosition.TOP,
@@ -1344,15 +1617,33 @@ class _CabinQualityAuditScreenNState extends State<CabinQualityAuditScreenN> {
       gate: _ctrl.selectedGate.value,
       shipNumber: _ctrl.shipNumber.value.trim(),
       role: _ctrl.supervisorRole.value,
+      aircraft: _ctrl.selectedAircraft.value,
+      supervisorName: _ctrl.supervisorName.value,
+      supervisorRole: _ctrl.supervisorRole.value,
+      selectedAreas: List<String>.from(_ctrl.selectedAreas),
       locationImage: _generalImages.isNotEmpty
           ? _generalImages.first.path
           : 'assets/images/indor.png',
       locationImage2: _generalImages.length > 1
           ? _generalImages[1].path
           : 'assets/images/window.png',
-      isPassed: _ctrl.areaCards.every((c) => c.status == 'pass'),
+      isPassed: _ctrl.areaCards.every((c) => c.computedStatus == 'pass'),
       areaResults: _ctrl.areaCards
-          .map((c) => {'area': c.areaName, 'status': c.status})
+          .map(
+            (c) => CabinSecurityAreaResult(
+              area: c.areaName,
+              status: c.computedStatus.isEmpty ? 'fail' : c.computedStatus,
+              subItems: c.subItems
+                  .map(
+                    (s) => CabinSecuritySubItem(
+                      name: s.itemName,
+                      status: s.status,
+                    ),
+                  )
+                  .toList(),
+              pictures: c.images.map((f) => f.path).toList(),
+            ),
+          )
           .toList(),
       otherFindings: _ctrl.otherFindingsCtrl.text.trim(),
       additionalNotes: _ctrl.additionalNotesCtrl.text.trim(),
@@ -1800,7 +2091,15 @@ class _CabinQualityAuditScreenNState extends State<CabinQualityAuditScreenN> {
           ? _C.primary
           : _C.seatColor;
       return GestureDetector(
-        onTap: () => _ctrl.toggleSeatArea(id),
+        onTap: () {
+          if (_ctrl.selectedSeatIds.contains(id)) {
+            // Already selected — deselect
+            _ctrl.toggleSeatArea(id);
+          } else {
+            // New selection — add area then scroll down; popup handled by area card
+            _ctrl.toggleSeatArea(id);
+          }
+        },
         child: Container(
           width: 30.w,
           height: 32.h,
@@ -1970,201 +2269,31 @@ class _CabinQualityAuditScreenNState extends State<CabinQualityAuditScreenN> {
   }
 
   // ─────────────────────────────────────────────
-  // DYNAMIC AREA CARD
+  // DYNAMIC AREA CARD — delegates to StatefulWidget
   // ─────────────────────────────────────────────
   Widget _buildAreaCard(AreaCard card) {
-    return Obx(() {
-      _ctrl.areaCards.length;
-      final status = card.status;
-      return Container(
-        margin: EdgeInsets.only(bottom: 12.h),
-        padding: EdgeInsets.all(14.w),
-        decoration: BoxDecoration(
-          color: _C.bg,
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(
-            color: status == 'pass'
-                ? _C.green.withValues(alpha: 0.4)
-                : status == 'fail'
-                ? _C.red.withValues(alpha: 0.4)
-                : _C.border,
-            width: status.isNotEmpty ? 1.5 : 1.0,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.location_searching_rounded,
-                  color: _C.primary,
-                  size: 16.sp,
-                ),
-                SizedBox(width: 8.w),
-                Text(
-                  '${card.areaName} *',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                    color: _C.dark,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatusButton(
-                    label: 'Pass',
-                    icon: Icons.check,
-                    isSelected: status == 'pass',
-                    color: _C.green,
-                    onTap: () => _ctrl.setAreaStatus(card.areaName, 'pass'),
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: _buildStatusButton(
-                    label: 'Fail',
-                    icon: Icons.close,
-                    isSelected: status == 'fail',
-                    color: _C.red,
-                    onTap: () => _ctrl.setAreaStatus(card.areaName, 'fail'),
-                  ),
-                ),
-              ],
-            ),
-            if (status == 'fail') ...[
-              SizedBox(height: 8.h),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: _C.red.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.warning_amber_rounded,
-                      color: _C.red,
-                      size: 14.sp,
-                    ),
-                    SizedBox(width: 6.w),
-                    Expanded(
-                      child: Text(
-                        'Team failed to find the hidden object in this area.',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 11.sp,
-                          color: _C.red,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (status.isNotEmpty) ...[
-              SizedBox(height: 12.h),
-              GestureDetector(
-                onTap: () async {
-                  final files = await _pickValidatedImages();
-                  for (final f in files) {
-                    _ctrl.addAreaImage(card.areaName, f);
-                  }
-                },
-                child: Container(
-                  height: 46.h,
-                  decoration: BoxDecoration(
-                    color: _C.white,
-                    borderRadius: BorderRadius.circular(25.r),
-                    border: Border.all(color: _C.border, width: 1.5),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.cloud_upload_outlined,
-                        size: 18.sp,
-                        color: _C.grey,
-                      ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'Upload an Image',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 13.sp,
-                          color: _C.grey,
-                        ),
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        '(max 100MB)',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 10.sp,
-                          color: _C.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (card.images.isNotEmpty) ...[
-                SizedBox(height: 10.h),
-                SizedBox(
-                  height: 72.h,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: card.images.length,
-                    itemBuilder: (_, i) => Stack(
-                      children: [
-                        Container(
-                          width: 64.w,
-                          height: 64.h,
-                          margin: EdgeInsets.only(right: 8.w),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(color: _C.border, width: 1),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8.r),
-                            child: Image.file(
-                              card.images[i],
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 2,
-                          right: 10,
-                          child: GestureDetector(
-                            onTap: () =>
-                                _ctrl.removeAreaImage(card.areaName, i),
-                            child: Container(
-                              padding: EdgeInsets.all(2.r),
-                              decoration: const BoxDecoration(
-                                color: Colors.black54,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 12.sp,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ],
-        ),
-      );
-    });
+    return _AreaCardWidget(
+      key: ValueKey(card.areaName),
+      card: card,
+      ctrl: _ctrl,
+      pickImages: _pickValidatedImages,
+    );
+  }
+
+  // Area icon helper
+  IconData _areaCardIcon(String area) {
+    final a = area.toLowerCase();
+    if (a.contains('galley')) return Icons.restaurant_rounded;
+    if (a.contains('lav')) return Icons.wc_rounded;
+    if (a.contains('first class') || a.contains('business'))
+      return Icons.airline_seat_recline_extra_rounded;
+    if (a.contains('comfort')) return Icons.airline_seat_recline_normal_rounded;
+    if (a.contains('cabin') || a.contains('main')) return Icons.weekend_rounded;
+    if (a.contains('overhead')) return Icons.inventory_2_outlined;
+    if (a.contains('pocket')) return Icons.book_outlined;
+    if (a.contains('crew')) return Icons.people_outline_rounded;
+    if (a.contains('emergency')) return Icons.health_and_safety_outlined;
+    return Icons.location_searching_rounded;
   }
 
   // ─────────────────────────────────────────────
@@ -2448,6 +2577,597 @@ class _CabinQualityAuditScreenNState extends State<CabinQualityAuditScreenN> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// AREA CARD — StatefulWidget (owns image/subitem state)
+// ─────────────────────────────────────────────
+class _AreaCardWidget extends StatefulWidget {
+  final AreaCard card;
+  final CabinQualityController ctrl;
+  final Future<List<File>> Function() pickImages;
+
+  const _AreaCardWidget({
+    required Key key,
+    required this.card,
+    required this.ctrl,
+    required this.pickImages,
+  }) : super(key: key);
+
+  @override
+  State<_AreaCardWidget> createState() => _AreaCardWidgetState();
+}
+
+class _AreaCardWidgetState extends State<_AreaCardWidget> {
+  AreaCard get card => widget.card;
+  CabinQualityController get ctrl => widget.ctrl;
+
+  // ── Phase 1: upload hiding photo ──────────────
+  Future<void> _pickHideImages() async {
+    final files = await widget.pickImages();
+    if (files.isEmpty) return;
+    for (final f in files) ctrl.addAreaImage(card.areaName, f);
+    setState(() {});
+  }
+
+  // ── Phase 2: upload audit photo ───────────────
+  Future<void> _pickAuditImages() async {
+    final files = await widget.pickImages();
+    if (files.isEmpty) return;
+    for (final f in files) ctrl.addAreaAuditImage(card.areaName, f);
+    setState(() {});
+  }
+
+  void _setSubItem(String itemName, String status) {
+    ctrl.setSubItemStatus(card.areaName, itemName, status);
+    setState(() {});
+  }
+
+  IconData _areaIcon(String area) {
+    final a = area.toLowerCase();
+    if (a.contains('galley')) return Icons.restaurant_rounded;
+    if (a.contains('lav')) return Icons.wc_rounded;
+    if (a.contains('first class') || a.contains('business'))
+      return Icons.airline_seat_recline_extra_rounded;
+    if (a.contains('comfort')) return Icons.airline_seat_recline_normal_rounded;
+    if (a.contains('cabin') || a.contains('main')) return Icons.weekend_rounded;
+    if (a.contains('overhead')) return Icons.inventory_2_outlined;
+    if (a.contains('pocket')) return Icons.book_outlined;
+    if (a.contains('crew')) return Icons.people_outline_rounded;
+    if (a.contains('emergency')) return Icons.health_and_safety_outlined;
+    return Icons.location_searching_rounded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUploaded = card.imageUploaded;
+    final overallStatus = card.computedStatus;
+
+    final borderColor = overallStatus == 'pass'
+        ? _C.green.withValues(alpha: 0.45)
+        : overallStatus == 'fail'
+        ? _C.red.withValues(alpha: 0.45)
+        : _C.border;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 14.h),
+      decoration: BoxDecoration(
+        color: _C.bg,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(
+          color: borderColor,
+          width: overallStatus.isNotEmpty ? 1.5 : 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header ──────────────────────────────
+          Padding(
+            padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 10.h),
+            child: Row(
+              children: [
+                Container(
+                  width: 36.w,
+                  height: 36.h,
+                  decoration: BoxDecoration(
+                    color: _C.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(
+                    _areaIcon(card.areaName),
+                    color: _C.primary,
+                    size: 18.sp,
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        card.areaName,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: _C.dark,
+                        ),
+                      ),
+                      Text(
+                        '${card.subItems.length} items to check',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11.sp,
+                          color: _C.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => ctrl.removeArea(card.areaName),
+                  child: Icon(Icons.close_rounded, color: _C.grey, size: 18.sp),
+                ),
+              ],
+            ),
+          ),
+
+          Divider(height: 1, color: _C.border),
+
+          // ── Phase 1: Upload hiding photo ─────────
+          Padding(
+            padding: EdgeInsets.all(14.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 20.w,
+                      height: 20.w,
+                      decoration: BoxDecoration(
+                        color: imageUploaded ? _C.green : _C.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        imageUploaded
+                            ? Icons.check_rounded
+                            : Icons.looks_one_rounded,
+                        color: Colors.white,
+                        size: 12.sp,
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'Upload photo of hidden asset *',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: imageUploaded ? _C.green : _C.dark,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10.h),
+                GestureDetector(
+                  onTap: _pickHideImages,
+                  child: Container(
+                    height: 46.h,
+                    decoration: BoxDecoration(
+                      color: _C.white,
+                      borderRadius: BorderRadius.circular(25.r),
+                      border: Border.all(
+                        color: imageUploaded
+                            ? _C.green.withValues(alpha: 0.5)
+                            : _C.border,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.cloud_upload_outlined,
+                          size: 18.sp,
+                          color: imageUploaded ? _C.green : _C.grey,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          imageUploaded
+                              ? 'Add more photos'
+                              : 'Upload hiding photo (max 100MB)',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 13.sp,
+                            color: imageUploaded ? _C.green : _C.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (card.images.isNotEmpty) ...[
+                  SizedBox(height: 10.h),
+                  SizedBox(
+                    height: 72.h,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: card.images.length,
+                      itemBuilder: (_, i) => Stack(
+                        children: [
+                          Container(
+                            width: 64.w,
+                            height: 64.h,
+                            margin: EdgeInsets.only(right: 8.w),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8.r),
+                              border: Border.all(color: _C.border),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8.r),
+                              child: Image.file(
+                                card.images[i],
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 2,
+                            right: 10,
+                            child: GestureDetector(
+                              onTap: () {
+                                ctrl.removeAreaImage(card.areaName, i);
+                                setState(() {});
+                              },
+                              child: Container(
+                                padding: EdgeInsets.all(2.r),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 12.sp,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // ── Phase 2: Subcategory audit ───────────
+          if (imageUploaded) ...[
+            Divider(height: 1, color: _C.border),
+            Padding(
+              padding: EdgeInsets.all(14.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 20.w,
+                        height: 20.w,
+                        decoration: BoxDecoration(
+                          color: overallStatus.isNotEmpty
+                              ? _C.green
+                              : _C.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          overallStatus.isNotEmpty
+                              ? Icons.check_rounded
+                              : Icons.looks_two_rounded,
+                          color: Colors.white,
+                          size: 12.sp,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Mark each item as agents find them',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: _C.dark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+
+                  // Subcategory items
+                  ...card.subItems.map(
+                    (sub) => Padding(
+                      padding: EdgeInsets.only(bottom: 10.h),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              sub.itemName,
+                              style: GoogleFonts.dmSans(
+                                fontSize: 13.sp,
+                                color: _C.dark,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => _setSubItem(sub.itemName, 'pass'),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 6.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: sub.status == 'pass'
+                                    ? _C.green
+                                    : _C.white,
+                                borderRadius: BorderRadius.circular(20.r),
+                                border: Border.all(
+                                  color: sub.status == 'pass'
+                                      ? _C.green
+                                      : _C.border,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Text(
+                                'Pass',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: sub.status == 'pass'
+                                      ? Colors.white
+                                      : _C.grey,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          GestureDetector(
+                            onTap: () => _setSubItem(sub.itemName, 'fail'),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 6.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: sub.status == 'fail' ? _C.red : _C.white,
+                                borderRadius: BorderRadius.circular(20.r),
+                                border: Border.all(
+                                  color: sub.status == 'fail'
+                                      ? _C.red
+                                      : _C.border,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Text(
+                                'Fail',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: sub.status == 'fail'
+                                      ? Colors.white
+                                      : _C.grey,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Score bar
+                  if (card.subItems.any((s) => s.status.isNotEmpty)) ...[
+                    SizedBox(height: 4.h),
+                    LayoutBuilder(
+                      builder: (_, c) {
+                        final pct = card.scorePercent / 100;
+                        final barColor = overallStatus == 'fail'
+                            ? _C.red
+                            : _C.green;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4.r),
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    height: 5.h,
+                                    width: c.maxWidth,
+                                    color: barColor.withValues(alpha: 0.15),
+                                  ),
+                                  Container(
+                                    height: 5.h,
+                                    width: c.maxWidth * pct,
+                                    color: barColor,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 3.h),
+                            Text(
+                              '${card.scorePercent.toStringAsFixed(0)}% found',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w600,
+                                color: barColor,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    SizedBox(height: 12.h),
+                  ],
+
+                  // Audit photo upload
+                  GestureDetector(
+                    onTap: _pickAuditImages,
+                    child: Container(
+                      height: 46.h,
+                      decoration: BoxDecoration(
+                        color: _C.white,
+                        borderRadius: BorderRadius.circular(25.r),
+                        border: Border.all(color: _C.border, width: 1.5),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.camera_alt_outlined,
+                            size: 18.sp,
+                            color: _C.grey,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'Upload audit photo (max 100MB)',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 13.sp,
+                              color: _C.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (card.auditImages.isNotEmpty) ...[
+                    SizedBox(height: 10.h),
+                    SizedBox(
+                      height: 72.h,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: card.auditImages.length,
+                        itemBuilder: (_, i) => Stack(
+                          children: [
+                            Container(
+                              width: 64.w,
+                              height: 64.h,
+                              margin: EdgeInsets.only(right: 8.w),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(color: _C.border),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8.r),
+                                child: Image.file(
+                                  card.auditImages[i],
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 2,
+                              right: 10,
+                              child: GestureDetector(
+                                onTap: () {
+                                  ctrl.removeAreaAuditImage(card.areaName, i);
+                                  setState(() {});
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.all(2.r),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 12.sp,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  // Fail warning
+                  if (overallStatus == 'fail') ...[
+                    SizedBox(height: 8.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 8.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _C.red.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: _C.red,
+                            size: 14.sp,
+                          ),
+                          SizedBox(width: 6.w),
+                          Expanded(
+                            child: Text(
+                              'Team failed to find hidden asset(s) in this area.',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 11.sp,
+                                color: _C.red,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ] else ...[
+            Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                decoration: BoxDecoration(
+                  color: _C.warnBg,
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(
+                    color: _C.warnBorder.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.lock_outline_rounded,
+                      color: const Color(0xFFAA7A00),
+                      size: 14.sp,
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        'Upload a hiding photo above to unlock the audit checklist.',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11.sp,
+                          color: const Color(0xFF7A5800),
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

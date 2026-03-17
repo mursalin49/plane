@@ -1237,7 +1237,110 @@ class _CabinAuditScreenState extends State<CabinAuditScreen> {
                             color: _C.grey,
                           ),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: 12.h),
+
+                        // ── Live Score Card ──────────────────────
+                        Obx(() {
+                          // Count pass/fail/na from current itemStatuses
+                          int passCount = 0;
+                          int failCount = 0;
+                          int totalChecked = 0;
+                          for (final item in checkItems) {
+                            final s = itemStatuses[item]!.value;
+                            if (s == 'pass') {
+                              passCount++;
+                              totalChecked++;
+                            } else if (s == 'fail') {
+                              failCount++;
+                              totalChecked++;
+                            }
+                          }
+                          // Any fail → overall FAIL (Hirtik's rule)
+                          final hasAnyFail = failCount > 0;
+                          final scorePercent = totalChecked == 0
+                              ? 0.0
+                              : (passCount / totalChecked) * 100;
+                          final overallColor = hasAnyFail
+                              ? _C.red
+                              : (passCount > 0 ? _C.green : _C.grey);
+                          final overallLabel = hasAnyFail
+                              ? 'FAIL'
+                              : (passCount > 0 ? 'PASS' : 'NOT CHECKED');
+
+                          return Container(
+                            padding: EdgeInsets.all(12.w),
+                            decoration: BoxDecoration(
+                              color: overallColor.withValues(alpha: 0.07),
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: overallColor.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                // Score circle
+                                Container(
+                                  width: 52.w,
+                                  height: 52.h,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: overallColor,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      totalChecked == 0
+                                          ? 'N/A'
+                                          : '${scorePercent.toStringAsFixed(0)}%',
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        overallLabel,
+                                        style: GoogleFonts.dmSans(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: overallColor,
+                                        ),
+                                      ),
+                                      SizedBox(height: 2.h),
+                                      Text(
+                                        '$passCount Pass  •  $failCount Fail  •  ${checkItems.length - totalChecked} N/A',
+                                        style: GoogleFonts.dmSans(
+                                          fontSize: 11.sp,
+                                          color: _C.grey,
+                                        ),
+                                      ),
+                                      if (hasAnyFail) ...[
+                                        SizedBox(height: 3.h),
+                                        Text(
+                                          'Any failed item = area FAIL',
+                                          style: GoogleFonts.dmSans(
+                                            fontSize: 10.sp,
+                                            color: _C.red,
+                                            fontWeight: FontWeight.w600,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        SizedBox(height: 16.h),
 
                         // Info note
                         Container(

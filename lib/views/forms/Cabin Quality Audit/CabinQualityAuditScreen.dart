@@ -98,6 +98,16 @@ class AuditedAreaResult {
   int get failCount =>
       checkItems.where((c) => c.status == AuditStatus.fail).length;
   int get naCount => checkItems.where((c) => c.status == AuditStatus.na).length;
+
+  /// Per-area score: N/A items are excluded from calculation
+  double get scorePercent {
+    final applicable = checkItems
+        .where((c) => c.status != AuditStatus.na)
+        .toList();
+    if (applicable.isEmpty) return 0;
+    final passed = applicable.where((c) => c.status == AuditStatus.pass).length;
+    return (passed / applicable.length) * 100;
+  }
 }
 
 class CabinAuditDetailModel {
@@ -137,6 +147,11 @@ class CabinAuditDetailModel {
     if (total == 0) return 0;
     return (passed / total) * 100;
   }
+
+  // Hirtik's rule: ANY subcategory fail = whole audit FAIL
+  bool get hasAnyFail => auditedAreas.any(
+    (area) => area.checkItems.any((c) => c.status == AuditStatus.fail),
+  );
 }
 
 // =====================
@@ -151,7 +166,7 @@ class CabinQualityAuditController extends GetxController {
     type: 'Charter',
     tailNumber: 'N123DL',
     notes:
-    'Overall cabin was in acceptable condition. '
+        'Overall cabin was in acceptable condition. '
         'Row 22C tray table latch was broken.',
     pictures: [
       'assets/images/indor.png',
@@ -159,88 +174,99 @@ class CabinQualityAuditController extends GetxController {
       'assets/images/indor.png',
     ],
     auditedAreas: [
+      // ── First Class seat 1A ─────────────────────────────
+      // items from AuditCheckItems.areaItems['first_class']
       AuditedAreaResult(
         areaId: '1A',
         sectionLabel: 'First Class',
         checkItems: [
-          CheckItemResult(itemName: 'First Class', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Front Galley', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Back Galley', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Front LAVs', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'MID LAVs', status: AuditStatus.na),
-          CheckItemResult(itemName: 'AFT LAVs', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Floor/Carpets', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Seat Back Trash', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Tray Tables', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'IFE Screens', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Seat Recline', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'IFE Screen', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Tray Table', status: AuditStatus.pass),
+          CheckItemResult(
+            itemName: 'Headrest / Pillow',
+            status: AuditStatus.pass,
+          ),
+          CheckItemResult(itemName: 'Blanket', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Seat Pocket', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Armrest', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Floor / Carpet', status: AuditStatus.na),
         ],
       ),
+
+      // ── Comfort seat 15B ────────────────────────────────
+      // items from AuditCheckItems.areaItems['comfort']
       AuditedAreaResult(
         areaId: '15B',
         sectionLabel: 'Comfort',
         checkItems: [
-          CheckItemResult(itemName: 'First Class', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Front Galley', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Back Galley', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Front LAVs', status: AuditStatus.na),
-          CheckItemResult(itemName: 'MID LAVs', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'AFT LAVs', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Floor/Carpets', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Seat Back Trash', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Tray Tables', status: AuditStatus.fail),
-          CheckItemResult(itemName: 'IFE Screens', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Seat', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Tray Table', status: AuditStatus.fail),
+          CheckItemResult(itemName: 'IFE Screen', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Overhead Bin', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Seat Pocket', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Floor / Carpet', status: AuditStatus.pass),
         ],
       ),
+
+      // ── Main Cabin seat 22C ─────────────────────────────
+      // items from AuditCheckItems.areaItems['main_cabin']
       AuditedAreaResult(
         areaId: '22C',
         sectionLabel: 'Main Cabin',
         checkItems: [
-          CheckItemResult(itemName: 'First Class', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Front Galley', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Back Galley', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Front LAVs', status: AuditStatus.na),
-          CheckItemResult(itemName: 'MID LAVs', status: AuditStatus.na),
-          CheckItemResult(itemName: 'AFT LAVs', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Floor/Carpets', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Seat Back Trash', status: AuditStatus.fail),
-          CheckItemResult(itemName: 'Tray Tables', status: AuditStatus.fail),
-          CheckItemResult(itemName: 'IFE Screens', status: AuditStatus.pass),
+          CheckItemResult(
+            itemName: 'Seat Back Trash',
+            status: AuditStatus.fail,
+          ),
+          CheckItemResult(itemName: 'Tray Table', status: AuditStatus.fail),
+          CheckItemResult(itemName: 'IFE Screen', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Floor / Carpet', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Overhead Bin', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Seat Pocket', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Armrest', status: AuditStatus.pass),
         ],
       ),
+
+      // ── LAV FWD ─────────────────────────────────────────
+      // items from AuditCheckItems.areaItems['lav']
       AuditedAreaResult(
         areaId: 'LAV FWD',
         sectionLabel: 'Lav',
         checkItems: [
-          CheckItemResult(itemName: 'First Class', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Front Galley', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Back Galley', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Front LAVs', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'MID LAVs', status: AuditStatus.na),
-          CheckItemResult(itemName: 'AFT LAVs', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Floor/Carpets', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Seat Back Trash', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Tray Tables', status: AuditStatus.na),
-          CheckItemResult(itemName: 'IFE Screens', status: AuditStatus.na),
+          CheckItemResult(itemName: 'Soap Dispenser', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Trash / Bin', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Mirror', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Toilet / Bowl', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Floor', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Sink', status: AuditStatus.pass),
+          CheckItemResult(itemName: 'Paper Towels', status: AuditStatus.fail),
+          CheckItemResult(itemName: 'Air Freshener', status: AuditStatus.pass),
         ],
       ),
+
+      // ── Galley FWD ──────────────────────────────────────
+      // items from AuditCheckItems.areaItems['galley']
       AuditedAreaResult(
         areaId: 'Galley FWD',
         sectionLabel: 'Galley',
-        pictures: [
-          'assets/images/indor.png',
-          'assets/images/window.png',
-        ],
+        pictures: ['assets/images/indor.png', 'assets/images/window.png'],
         checkItems: [
-          CheckItemResult(itemName: 'First Class', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Front Galley', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Back Galley', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Front LAVs', status: AuditStatus.na),
-          CheckItemResult(itemName: 'MID LAVs', status: AuditStatus.na),
-          CheckItemResult(itemName: 'AFT LAVs', status: AuditStatus.na),
-          CheckItemResult(itemName: 'Floor/Carpets', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Seat Back Trash', status: AuditStatus.pass),
-          CheckItemResult(itemName: 'Tray Tables', status: AuditStatus.na),
-          CheckItemResult(itemName: 'IFE Screens', status: AuditStatus.na),
+          CheckItemResult(itemName: 'Trash', status: AuditStatus.pass),
+          CheckItemResult(
+            itemName: 'Counter / Surface',
+            status: AuditStatus.pass,
+          ),
+          CheckItemResult(
+            itemName: 'Oven / Microwave',
+            status: AuditStatus.pass,
+          ),
+          CheckItemResult(itemName: 'Coffee Maker', status: AuditStatus.pass),
+          CheckItemResult(
+            itemName: 'Storage Compartments',
+            status: AuditStatus.pass,
+          ),
+          CheckItemResult(itemName: 'Floor', status: AuditStatus.pass),
         ],
       ),
     ],
@@ -339,7 +365,7 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
           ),
           GestureDetector(
             onTap: _showFilterSheet,
-            child: Icon(Icons.more_vert, color: _Colors.primary, size: 24.sp),
+            child: Icon(Icons.tune, color: _Colors.primary, size: 24.sp),
           ),
         ],
       ),
@@ -394,7 +420,9 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
             color: isSelected ? _Colors.primary : _Colors.namePrimary,
           ),
         ),
-        trailing: isSelected ? Icon(Icons.check_rounded, color: _Colors.primary) : null,
+        trailing: isSelected
+            ? Icon(Icons.check_rounded, color: _Colors.primary)
+            : null,
         onTap: () {
           controller.filter.value = status;
           Get.back();
@@ -410,7 +438,7 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
       margin: EdgeInsets.only(bottom: 8.h),
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       child: Obx(
-            () => Row(
+        () => Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             GestureDetector(
@@ -443,13 +471,16 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
     );
   }
 
-  // ── Score Card ───────────────────────────────────────────
   Widget _buildScoreCard() {
     return Obx(() {
       final d = controller.detail.value;
       final score = d.scorePercent;
-      final isGood = score >= 80;
+      // Hirtik: any subcategory fail = FAIL regardless of score %
+      final isGood = !d.hasAnyFail;
       final scoreColor = isGood ? _Colors.pass : _Colors.fail;
+      final failAreaCount = d.auditedAreas
+          .where((a) => a.overallStatus == AuditStatus.fail)
+          .length;
 
       return Container(
         margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
@@ -461,6 +492,7 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
         ),
         child: Row(
           children: [
+            // Score circle
             Container(
               width: 64.w,
               height: 64.h,
@@ -494,13 +526,24 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    '${d.auditedAreas.length} areas audited  •  '
-                        '${d.auditedAreas.where((a) => a.overallStatus == AuditStatus.fail).length} failed',
+                    '${d.auditedAreas.length} areas audited  •  $failAreaCount failed',
                     style: GoogleFonts.poppins(
                       fontSize: 12.sp,
                       color: _Colors.textGrey,
                     ),
                   ),
+                  if (!isGood) ...[
+                    SizedBox(height: 3.h),
+                    Text(
+                      'Any failed item = audit FAIL',
+                      style: GoogleFonts.poppins(
+                        fontSize: 10.sp,
+                        color: _Colors.fail,
+                        fontWeight: FontWeight.w600,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -627,9 +670,7 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
                       ),
                     ),
                   ),
-                  if (currentFilter != null) ...[
-                    _statusBadge(currentFilter),
-                  ]
+                  if (currentFilter != null) ...[_statusBadge(currentFilter)],
                 ],
               ),
             ),
@@ -684,11 +725,52 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
                       ),
                       Text(
                         'Area: ${area.areaId}  •  '
-                            '${area.passCount}P  ${area.failCount}F  ${area.naCount}N/A',
+                        '${area.passCount}P  ${area.failCount}F  ${area.naCount}N/A',
                         style: GoogleFonts.poppins(
                           fontSize: 11.sp,
                           color: _Colors.textGrey,
                         ),
+                      ),
+                      SizedBox(height: 6.h),
+                      // ── Per-area progress bar + score ──────
+                      LayoutBuilder(
+                        builder: (_, constraints) {
+                          final pct = area.scorePercent / 100;
+                          final barColor = overall == AuditStatus.fail
+                              ? _Colors.fail
+                              : _Colors.pass;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4.r),
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      height: 5.h,
+                                      width: constraints.maxWidth,
+                                      color: barColor.withValues(alpha: 0.15),
+                                    ),
+                                    Container(
+                                      height: 5.h,
+                                      width: constraints.maxWidth * pct,
+                                      color: barColor,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 3.h),
+                              Text(
+                                '${area.scorePercent.toStringAsFixed(0)}% score',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: barColor,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -716,7 +798,7 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
 
   Widget _buildExpandedItems(AuditedAreaResult area) {
     final currentFilter = controller.filter.value;
-    
+
     // Filter out N/A. Further filter if user selected Pass/Fail overall.
     final itemsToShow = area.checkItems.where((item) {
       if (item.status == AuditStatus.na) return false;
@@ -752,7 +834,11 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
                 padding: EdgeInsets.symmetric(vertical: 5.h),
                 child: Row(
                   children: [
-                    Icon(item.status.icon, color: item.status.color, size: 16.sp),
+                    Icon(
+                      item.status.icon,
+                      color: item.status.color,
+                      size: 16.sp,
+                    ),
                     SizedBox(width: 10.w),
                     Expanded(
                       child: Text(
@@ -785,7 +871,7 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
             ),
             SizedBox(height: 8.h),
             _buildAreaPictures(area.pictures!),
-          ]
+          ],
         ],
       ),
     );
@@ -909,7 +995,7 @@ class _CabinQualityAuditScreenState extends State<CabinQualityAuditScreen> {
         ),
         SizedBox(height: 10.h),
         Obx(
-              () => Row(
+          () => Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(images.length, (index) {
               final isActive = _currentPage.value == index;

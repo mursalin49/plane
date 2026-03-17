@@ -22,9 +22,9 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
 
   // ── Step 0 fields
   final _supervisorCtrl = TextEditingController();
-  final _driverCtrl     = TextEditingController();
-  final _shipCtrl       = TextEditingController();
-  String _selectedGate  = 'Please Select One';
+  final _driverCtrl = TextEditingController();
+  final _shipCtrl = TextEditingController();
+  String _selectedGate = 'Please Select One';
 
   // ── Step 1 — checklist
   final Map<String, String?> _selectedValues = {};
@@ -33,7 +33,7 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
 
   // ── Step 2 — notes + pictures
   final _otherFindingsCtrl = TextEditingController();
-  final _additionalCtrl    = TextEditingController();
+  final _additionalCtrl = TextEditingController();
   final List<File> _step2Images = [];
 
   final SignatureController _signatureController = SignatureController(
@@ -42,7 +42,7 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
     exportBackgroundColor: Colors.white,
   );
 
-  static const double _cardRadius  = 16;
+  static const double _cardRadius = 16;
   static const double _inputRadius = 12;
 
   // ─────────────────────────────────────────────
@@ -84,7 +84,7 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () =>
-          _step > 0 ? setState(() => _step--) : Navigator.pop(context),
+              _step > 0 ? setState(() => _step--) : Navigator.pop(context),
         ),
         title: AppText(
           "LAV Safety Observation",
@@ -94,8 +94,7 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline_rounded,
-                color: Colors.white),
+            icon: const Icon(Icons.info_outline_rounded, color: Colors.white),
             onPressed: () => _showInstructions(context),
           ),
         ],
@@ -126,16 +125,13 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
                 _buildReadOnlyDateField(),
                 _buildRequiredLabel("Supervisor/Lead"),
                 _buildTextField(
-                    "Enter supervisor or lead name",
-                    controller: _supervisorCtrl),
+                  "Enter supervisor or lead name",
+                  controller: _supervisorCtrl,
+                ),
                 _buildRequiredLabel("Driver"),
-                _buildTextField(
-                    "Enter Driver's Name",
-                    controller: _driverCtrl),
+                _buildTextField("Enter Driver's Name", controller: _driverCtrl),
                 _buildRequiredLabel("Ship"),
-                _buildTextField(
-                    "Enter Ship Number",
-                    controller: _shipCtrl),
+                _buildTextField("Enter Ship Number", controller: _shipCtrl),
                 _buildRequiredLabel("Gate"),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
@@ -184,60 +180,76 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
                 _buildSectionCard(
                   children: [
                     _buildAuditRow(
-                      "Used Chocks", "chocks",
+                      "Used Chocks",
+                      "chocks",
                       showImageUpload: true,
                     ),
                     _buildAuditRow(
-                      "Safety Stop", "safety_stop",
+                      "Safety Stop",
+                      "safety_stop",
                       subtitle:
-                      "Checking if breaks are functional before approaching to aircraft",
+                          "Checking if breaks are functional before approaching to aircraft",
                       showImageUpload: true,
                     ),
                     _buildAuditRow(
-                      "Used Guide Cone", "guide_cone",
+                      "Used Guide Cone",
+                      "guide_cone",
                       subtitle:
-                      "Placing guide code near panel before reversing LAV truck near aircraft",
+                          "Placing guide code near panel before reversing LAV truck near aircraft",
                       showImageUpload: true,
                     ),
                     _buildAuditRow(
-                      "Face Mask", "mask",
-                      subtitle:
-                      "Was Face Mask used while servicing aircraft?",
+                      "Face Mask",
+                      "mask",
+                      subtitle: "Was Face Mask used while servicing aircraft?",
+                      showImageUpload: true,
                     ),
                     _buildAuditRow(
-                      "Gloves", "gloves",
-                      subtitle:
-                      "Was agent using gloves to service?",
+                      "Gloves",
+                      "gloves",
+                      subtitle: "Was agent using gloves to service?",
+                      showImageUpload: true,
                     ),
                     _buildAuditRow(
-                      "Shoes", "shoes",
-                      subtitle:
-                      "Was agent wearing proper shoes and clothing?",
+                      "Shoes",
+                      "shoes",
+                      subtitle: "Was agent wearing proper shoes and clothing?",
+                      showImageUpload: true,
                     ),
                     _buildAuditRow(
-                      "Dump", "dump",
+                      "Dump",
+                      "dump",
                       subtitle: "Was the aircraft Dumped?",
+                      showImageUpload: true,
                     ),
                     _buildAuditRow(
-                      "Flush", "flush",
+                      "Flush",
+                      "flush",
                       subtitle:
-                      "Was the aircraft Flushed with required amount of blue juice?",
+                          "Was the aircraft Flushed with required amount of blue juice?",
+                      showImageUpload: true,
                     ),
                     _buildAuditRow(
-                      "Fill", "fill",
+                      "Fill",
+                      "fill",
                       subtitle:
-                      "Was the Aircraft filled with the required amount of Blue Juice?",
+                          "Was the Aircraft filled with the required amount of Blue Juice?",
+                      showImageUpload: true,
                     ),
                     _buildAuditRow(
-                      "360 Walk Around", "walkaround",
+                      "360 Walk Around",
+                      "walkaround",
                       subtitle:
-                      "LAV Driver Walks around LAV Truck to make sure the truck is clear to move...",
+                          "LAV Driver Walks around LAV Truck to make sure the truck is clear to move...",
+                      showImageUpload: true,
                     ),
                     _buildAuditRow(
-                      "Chock Removal Process", "chock_removal",
+                      "Chock Removal Process",
+                      "chock_removal",
                       subtitle:
-                      "LAV Driver Takes out forward check and drives up 10 feet before coming back...",
+                          "LAV Driver Takes out forward check and drives up 10 feet before coming back...",
                       isLast: true,
+                      showImageUpload: true,
                     ),
                   ],
                 ),
@@ -292,30 +304,31 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
                       return Stack(
                         children: [
                           ClipRRect(
-                            borderRadius:
-                            BorderRadius.circular(8),
-                            child: Image.file(file,
-                                width: 72,
-                                height: 72,
-                                fit: BoxFit.cover),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(
+                              file,
+                              width: 72,
+                              height: 72,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                           Positioned(
-                            top: 3, right: 3,
+                            top: 3,
+                            right: 3,
                             child: GestureDetector(
-                              onTap: () => setState(
-                                      () => _step2Images
-                                      .remove(file)),
+                              onTap: () =>
+                                  setState(() => _step2Images.remove(file)),
                               child: Container(
-                                padding:
-                                const EdgeInsets.all(2),
+                                padding: const EdgeInsets.all(2),
                                 decoration: const BoxDecoration(
                                   color: Colors.black54,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                    size: 13),
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 13,
+                                ),
                               ),
                             ),
                           ),
@@ -348,7 +361,11 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.draw_rounded, color: AppColors.mainAppColor, size: 20),
+                              Icon(
+                                Icons.draw_rounded,
+                                color: AppColors.mainAppColor,
+                                size: 20,
+                              ),
                               const SizedBox(width: 8),
                               const Text(
                                 'Digital Signature',
@@ -371,7 +388,10 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
                           GestureDetector(
                             onTap: () => _signatureController.clear(),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.red.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
@@ -394,7 +414,10 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: const Color(0xFFF9FAFB),
-                            border: Border.all(color: AppColors.mainAppColor.withOpacity(0.3), width: 1.5),
+                            border: Border.all(
+                              color: AppColors.mainAppColor.withOpacity(0.3),
+                              width: 1.5,
+                            ),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Stack(
@@ -436,8 +459,13 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
             height: 52,
             child: ElevatedButton(
               onPressed: () {
-                Get.snackbar("Success", "LAV Safety Report Sent Successfully",
-                    snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+                Get.snackbar(
+                  "Success",
+                  "LAV Safety Report Sent Successfully",
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.green,
+                  colorText: Colors.white,
+                );
                 Get.off(() => const LavSafetyObservationScreen());
               },
               style: ElevatedButton.styleFrom(
@@ -466,12 +494,12 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
   // ─────────────────────────────────────────────
 
   Widget _buildAuditRow(
-      String title,
-      String key, {
-        String? subtitle,
-        bool showImageUpload = false,
-        bool isLast = false,
-      }) {
+    String title,
+    String key, {
+    String? subtitle,
+    bool showImageUpload = false,
+    bool isLast = false,
+  }) {
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
       child: Column(
@@ -481,22 +509,17 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
           if (subtitle != null) ...[
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: AppText(subtitle,
-                  fontSize: 13, color: AppColors.grey),
+              child: AppText(subtitle, fontSize: 13, color: AppColors.grey),
             ),
           ] else
             const SizedBox(height: 8),
 
-          // Pass / Fail / N/A — 3 buttons
+          // Pass / Fail — 2 buttons (N/A removed)
           Row(
             children: [
-              _auditChip(key, "Pass", AppIcons.correct,
-                  AppColors.green),
+              _auditChip(key, "Pass", AppIcons.correct, AppColors.green),
               const SizedBox(width: 8),
-              _auditChip(
-                  key, "Fail", AppIcons.cancel, AppColors.red),
-              const SizedBox(width: 8),
-              _auditChipNA(key),
+              _auditChip(key, "Fail", AppIcons.cancel, AppColors.red),
             ],
           ),
 
@@ -517,24 +540,31 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.file(file,
-                            width: 64,
-                            height: 64,
-                            fit: BoxFit.cover),
+                        child: Image.file(
+                          file,
+                          width: 64,
+                          height: 64,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                       Positioned(
-                        top: 2, right: 2,
+                        top: 2,
+                        right: 2,
                         child: GestureDetector(
-                          onTap: () => setState(() =>
-                              _uploadedImages[key]!.remove(file)),
+                          onTap: () => setState(
+                            () => _uploadedImages[key]!.remove(file),
+                          ),
                           child: Container(
                             padding: const EdgeInsets.all(2),
                             decoration: const BoxDecoration(
                               color: Colors.black54,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close,
-                                color: Colors.white, size: 12),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 12,
+                            ),
                           ),
                         ),
                       ),
@@ -550,21 +580,18 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
   }
 
   // Pass / Fail chip (with svg icon)
-  Widget _auditChip(
-      String key, String value, String svgIcon, Color color) {
+  Widget _auditChip(String key, String value, String svgIcon, Color color) {
     bool isSelected = _selectedValues[key] == value;
     return Expanded(
       child: GestureDetector(
-        onTap: () =>
-            setState(() => _selectedValues[key] = value),
+        onTap: () => setState(() => _selectedValues[key] = value),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
             color: isSelected
                 ? color.withValues(alpha: 0.12)
                 : const Color(0xFFF9FAFB),
-            borderRadius:
-            BorderRadius.circular(_inputRadius),
+            borderRadius: BorderRadius.circular(_inputRadius),
             border: Border.all(
               color: isSelected ? color : AppColors.border,
               width: isSelected ? 1.5 : 1,
@@ -586,53 +613,10 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
               AppText(
                 value,
                 fontSize: 13,
-                fontWeight: isSelected
-                    ? FontWeight.w600
-                    : FontWeight.w500,
-                color: isSelected
-                    ? color
-                    : AppColors.from_heading,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? color : AppColors.from_heading,
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // N/A chip (no icon)
-  Widget _auditChipNA(String key) {
-    final isSelected = _selectedValues[key] == 'N/A';
-    return Expanded(
-      child: GestureDetector(
-        onTap: () =>
-            setState(() => _selectedValues[key] = 'N/A'),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.mainAppColor.withValues(alpha: 0.12)
-                : const Color(0xFFF9FAFB),
-            borderRadius:
-            BorderRadius.circular(_inputRadius),
-            border: Border.all(
-              color: isSelected
-                  ? AppColors.mainAppColor
-                  : AppColors.border,
-              width: isSelected ? 1.5 : 1,
-            ),
-          ),
-          child: Center(
-            child: AppText(
-              'N/A',
-              fontSize: 13,
-              fontWeight: isSelected
-                  ? FontWeight.w600
-                  : FontWeight.w500,
-              color: isSelected
-                  ? AppColors.mainAppColor
-                  : AppColors.from_heading,
-            ),
           ),
         ),
       ),
@@ -645,15 +629,20 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppText(text,
-              fontWeight: FontWeight.w600,
-              color: AppColors.mainAppColor,
-              fontSize: 14),
-          const Text(" *",
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.red,
-                  fontSize: 16)),
+          AppText(
+            text,
+            fontWeight: FontWeight.w600,
+            color: AppColors.mainAppColor,
+            fontSize: 14,
+          ),
+          const Text(
+            " *",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.red,
+              fontSize: 16,
+            ),
+          ),
         ],
       ),
     );
@@ -661,8 +650,7 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
 
   Widget _buildReadOnlyDateField() {
     return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 14, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       margin: const EdgeInsets.only(bottom: 16),
       width: double.infinity,
       decoration: BoxDecoration(
@@ -675,19 +663,16 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
           Expanded(
             child: Text(
               _formatCurrentDate(),
-              style: TextStyle(
-                  color: AppColors.dark, fontSize: 15),
+              style: TextStyle(color: AppColors.dark, fontSize: 15),
             ),
           ),
-          Icon(Icons.calendar_month_outlined,
-              color: AppColors.grey, size: 20),
+          Icon(Icons.calendar_month_outlined, color: AppColors.grey, size: 20),
         ],
       ),
     );
   }
 
-  Widget _buildSectionCard(
-      {String? title, required List<Widget> children}) {
+  Widget _buildSectionCard({String? title, required List<Widget> children}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -707,10 +692,12 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (title != null && title.isNotEmpty) ...[
-            AppText(title,
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: AppColors.dark),
+            AppText(
+              title,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: AppColors.dark,
+            ),
             const SizedBox(height: 16),
           ],
           ...children,
@@ -719,8 +706,7 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
     );
   }
 
-  Widget _buildTextField(String hint,
-      {TextEditingController? controller}) {
+  Widget _buildTextField(String hint, {TextEditingController? controller}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
@@ -728,8 +714,8 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-              color: AppColors.from_heading
-                  .withValues(alpha: 0.8)),
+            color: AppColors.from_heading.withValues(alpha: 0.8),
+          ),
           filled: true,
           fillColor: const Color(0xFFF9FAFB),
           border: OutlineInputBorder(
@@ -742,27 +728,33 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(
-                color: AppColors.mainAppColor, width: 1.5),
+            borderSide: BorderSide(color: AppColors.mainAppColor, width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 14),
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildNoteField(String label, String hint,
-      {TextEditingController? controller}) {
+  Widget _buildNoteField(
+    String label,
+    String hint, {
+    TextEditingController? controller,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText(label,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.mainAppColor),
+          AppText(
+            label,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.mainAppColor,
+          ),
           const SizedBox(height: 6),
           TextField(
             controller: controller,
@@ -770,28 +762,24 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                  color: AppColors.from_heading
-                      .withValues(alpha: 0.8)),
+                color: AppColors.from_heading.withValues(alpha: 0.8),
+              ),
               filled: true,
               fillColor: const Color(0xFFF9FAFB),
               border: OutlineInputBorder(
-                borderRadius:
-                BorderRadius.circular(_inputRadius),
-                borderSide:
-                BorderSide(color: AppColors.border),
+                borderRadius: BorderRadius.circular(_inputRadius),
+                borderSide: BorderSide(color: AppColors.border),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius:
-                BorderRadius.circular(_inputRadius),
-                borderSide:
-                BorderSide(color: AppColors.border),
+                borderRadius: BorderRadius.circular(_inputRadius),
+                borderSide: BorderSide(color: AppColors.border),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius:
-                BorderRadius.circular(_inputRadius),
+                borderRadius: BorderRadius.circular(_inputRadius),
                 borderSide: BorderSide(
-                    color: AppColors.mainAppColor,
-                    width: 1.5),
+                  color: AppColors.mainAppColor,
+                  width: 1.5,
+                ),
               ),
               contentPadding: const EdgeInsets.all(16),
             ),
@@ -813,12 +801,12 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.cloud_upload_outlined,
-              color: AppColors.grey, size: 20),
+          Icon(Icons.cloud_upload_outlined, color: AppColors.grey, size: 20),
           const SizedBox(width: 8),
-          Text("Upload an image",
-              style: TextStyle(
-                  color: AppColors.grey, fontSize: 14)),
+          Text(
+            "Upload an image",
+            style: TextStyle(color: AppColors.grey, fontSize: 14),
+          ),
         ],
       ),
     );
@@ -855,13 +843,14 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.info_outline_rounded,
-                color: AppColors.mainAppColor, size: 26),
+            Icon(
+              Icons.info_outline_rounded,
+              color: AppColors.mainAppColor,
+              size: 26,
+            ),
             const SizedBox(width: 10),
             Text(
               "Instructions",
@@ -880,17 +869,19 @@ class _LAVSafetyScreenState extends State<LAVSafetyScreen> {
             Text(
               'Conduct the LAV Audit as you observe the Drivers, don\'t wait till the end of the shift to submit.',
               style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.dark,
-                  height: 1.5),
+                fontSize: 14,
+                color: AppColors.dark,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 10),
             Text(
               'Please submit this with as much detail as possible 2 Observations per Shift',
               style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.dark,
-                  height: 1.5),
+                fontSize: 14,
+                color: AppColors.dark,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 10),
             Text(

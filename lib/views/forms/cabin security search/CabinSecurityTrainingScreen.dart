@@ -33,18 +33,22 @@ class TrainingItem {
   final String observerImage;
   final String date;
   final String time;
-  final DateTime dateTime; // used for newest-first sort
+  final DateTime dateTime;
   final String gate;
   final String shipNumber;
   final String role;
   final String locationImage;
   final String locationImage2;
   final bool isPassed;
-  // Doc: Inspection checklist — areas with their pass/fail status
-  final List<Map<String, String>>
-  areaResults; // [{'area': 'Front Galley', 'status': 'pass'}, ...]
+  final List<CabinSecurityAreaResult> areaResults;
   final String otherFindings;
   final String additionalNotes;
+
+  // ── Extra detail fields from cabin_secuirity.dart ──────
+  final String aircraft;
+  final String supervisorName;
+  final String supervisorRole;
+  final List<String> selectedAreas;
 
   TrainingItem({
     required this.id,
@@ -62,7 +66,19 @@ class TrainingItem {
     this.areaResults = const [],
     this.otherFindings = '',
     this.additionalNotes = '',
+    this.aircraft = '',
+    this.supervisorName = '',
+    this.supervisorRole = '',
+    this.selectedAreas = const [],
   });
+
+  int get passAreaCount => areaResults.where((r) => r.status == 'pass').length;
+  int get failAreaCount => areaResults.where((r) => r.status == 'fail').length;
+
+  double get scorePercent {
+    if (areaResults.isEmpty) return 0;
+    return (passAreaCount / areaResults.length) * 100;
+  }
 }
 
 // =====================
@@ -71,6 +87,15 @@ class TrainingItem {
 class CabinSecurityController extends GetxController {
   final RxList<TrainingItem> _allTrainings = <TrainingItem>[].obs;
   final RxList<TrainingItem> filteredTrainings = <TrainingItem>[].obs;
+  final RxInt expandedAreaIndex = (-1).obs;
+
+  void toggleArea(int index) {
+    if (expandedAreaIndex.value == index) {
+      expandedAreaIndex.value = -1;
+    } else {
+      expandedAreaIndex.value = index;
+    }
+  }
 
   final RxString filterName = ''.obs;
   final RxString filterFromDate = ''.obs;
@@ -98,13 +123,50 @@ class CabinSecurityController extends GetxController {
         gate: 'Gate A-03',
         shipNumber: 'N123DL',
         role: 'Supervisor',
+        aircraft: 'Boeing 757-300 (75Y)',
+        supervisorName: 'Guy Hawkins',
+        supervisorRole: 'Supervisor',
+        selectedAreas: ['Front Galley', 'FWD LAV', 'Overhead Bins'],
         locationImage: 'assets/images/indor.png',
         locationImage2: 'assets/images/window.png',
         isPassed: true,
         areaResults: [
-          {'area': 'Front Galley', 'status': 'pass'},
-          {'area': 'FWD LAV', 'status': 'pass'},
-          {'area': 'Overhead Bins', 'status': 'pass'},
+          CabinSecurityAreaResult(
+            area: 'Front Galley',
+            status: 'pass',
+            pictures: ['assets/images/indor.png', 'assets/images/window.png'],
+            subItems: [
+              CabinSecuritySubItem(name: 'Counter / Surface', status: 'pass'),
+              CabinSecuritySubItem(
+                name: 'Storage Compartments',
+                status: 'pass',
+              ),
+              CabinSecuritySubItem(name: 'Oven / Microwave', status: 'pass'),
+              CabinSecuritySubItem(name: 'Coffee Maker', status: 'pass'),
+              CabinSecuritySubItem(name: 'Trash', status: 'pass'),
+              CabinSecuritySubItem(name: 'Floor', status: 'pass'),
+            ],
+          ),
+          CabinSecurityAreaResult(
+            area: 'FWD LAV',
+            status: 'pass',
+            subItems: [
+              CabinSecuritySubItem(name: 'Trash Bin', status: 'pass'),
+              CabinSecuritySubItem(name: 'Under Sink', status: 'pass'),
+              CabinSecuritySubItem(name: 'Mirror / Cabinet', status: 'pass'),
+              CabinSecuritySubItem(name: 'Toilet Area', status: 'pass'),
+              CabinSecuritySubItem(name: 'Floor', status: 'pass'),
+              CabinSecuritySubItem(name: 'Counter', status: 'pass'),
+            ],
+          ),
+          CabinSecurityAreaResult(
+            area: 'Overhead Bins',
+            status: 'pass',
+            subItems: [
+              CabinSecuritySubItem(name: 'Bin Row 1–6', status: 'pass'),
+              CabinSecuritySubItem(name: 'Bin Row 7–14', status: 'pass'),
+            ],
+          ),
         ],
         otherFindings: '',
         additionalNotes: 'All agents performed well.',
@@ -119,12 +181,40 @@ class CabinSecurityController extends GetxController {
         gate: 'Gate C-07',
         shipNumber: 'N456AA',
         role: 'Duty Manager',
+        aircraft: 'Boeing 737-800',
+        supervisorName: 'Theresa Webb',
+        supervisorRole: 'Duty Manager',
+        selectedAreas: ['Main Cabin', 'Rear Galley'],
         locationImage: 'assets/images/indor.png',
         locationImage2: 'assets/images/window.png',
         isPassed: true,
         areaResults: [
-          {'area': 'Main Cabin', 'status': 'pass'},
-          {'area': 'Rear Galley', 'status': 'pass'},
+          CabinSecurityAreaResult(
+            area: 'Main Cabin',
+            status: 'pass',
+            subItems: [
+              CabinSecuritySubItem(name: 'Seat Cushion', status: 'pass'),
+              CabinSecuritySubItem(name: 'Seat Back Pocket', status: 'pass'),
+              CabinSecuritySubItem(name: 'Overhead Bin', status: 'pass'),
+              CabinSecuritySubItem(name: 'Tray Table', status: 'pass'),
+              CabinSecuritySubItem(name: 'Under Seat', status: 'pass'),
+              CabinSecuritySubItem(name: 'Floor / Carpet', status: 'pass'),
+            ],
+          ),
+          CabinSecurityAreaResult(
+            area: 'Rear Galley',
+            status: 'pass',
+            subItems: [
+              CabinSecuritySubItem(name: 'Counter / Surface', status: 'pass'),
+              CabinSecuritySubItem(
+                name: 'Storage Compartments',
+                status: 'pass',
+              ),
+              CabinSecuritySubItem(name: 'Oven / Microwave', status: 'pass'),
+              CabinSecuritySubItem(name: 'Trash', status: 'pass'),
+              CabinSecuritySubItem(name: 'Floor', status: 'pass'),
+            ],
+          ),
         ],
       ),
       TrainingItem(
@@ -137,13 +227,40 @@ class CabinSecurityController extends GetxController {
         gate: 'Gate B-04',
         shipNumber: 'N789UA',
         role: 'Supervisor',
+        aircraft: 'Airbus A320',
+        supervisorName: 'Kristin Watson',
+        supervisorRole: 'Supervisor',
+        selectedAreas: ['Seat Pockets', 'AFT LAV L', 'Main Cabin'],
         locationImage: 'assets/images/indor.png',
         locationImage2: 'assets/images/window.png',
         isPassed: false,
         areaResults: [
-          {'area': 'Seat Pockets', 'status': 'fail'},
-          {'area': 'AFT LAV L', 'status': 'fail'},
-          {'area': 'Main Cabin', 'status': 'pass'},
+          CabinSecurityAreaResult(
+            area: 'Seat Pockets',
+            status: 'fail',
+            subItems: [
+              CabinSecuritySubItem(name: 'Row 1–10 Pockets', status: 'pass'),
+              CabinSecuritySubItem(name: 'Row 11–20 Pockets', status: 'fail'),
+            ],
+          ),
+          CabinSecurityAreaResult(
+            area: 'AFT LAV L',
+            status: 'fail',
+            subItems: [
+              CabinSecuritySubItem(name: 'Trash Bin', status: 'pass'),
+              CabinSecuritySubItem(name: 'Under Sink', status: 'fail'),
+              CabinSecuritySubItem(name: 'Mirror / Cabinet', status: 'pass'),
+              CabinSecuritySubItem(name: 'Toilet Area', status: 'pass'),
+            ],
+          ),
+          CabinSecurityAreaResult(
+            area: 'Main Cabin',
+            status: 'pass',
+            subItems: [
+              CabinSecuritySubItem(name: 'Seat Cushion', status: 'pass'),
+              CabinSecuritySubItem(name: 'Tray Table', status: 'pass'),
+            ],
+          ),
         ],
         otherFindings: 'Test object not found under seat 22B.',
         additionalNotes: 'Retraining scheduled for next shift.',
@@ -158,12 +275,30 @@ class CabinSecurityController extends GetxController {
         gate: 'Gate A-12',
         shipNumber: 'N321DL',
         role: 'General Manager',
+        aircraft: 'Boeing 757-300 (75Y)',
+        supervisorName: 'Jane Cooper',
+        supervisorRole: 'General Manager',
+        selectedAreas: ['Overhead Bins', 'Front Galley'],
         locationImage: 'assets/images/indor.png',
         locationImage2: 'assets/images/window.png',
         isPassed: false,
         areaResults: [
-          {'area': 'Overhead Bins', 'status': 'fail'},
-          {'area': 'Front Galley', 'status': 'pass'},
+          CabinSecurityAreaResult(
+            area: 'Overhead Bins',
+            status: 'fail',
+            subItems: [
+              CabinSecuritySubItem(name: 'Bin Row 1-6', status: 'pass'),
+              CabinSecuritySubItem(name: 'Bin Row 7-14', status: 'fail'),
+            ],
+          ),
+          CabinSecurityAreaResult(
+            area: 'Front Galley',
+            status: 'pass',
+            subItems: [
+              CabinSecuritySubItem(name: 'Counter / Surface', status: 'pass'),
+              CabinSecuritySubItem(name: 'Trash', status: 'pass'),
+            ],
+          ),
         ],
         otherFindings: 'Overhead bin in row 14 missed.',
       ),
@@ -649,46 +784,46 @@ class _CabinSecurityScreenState extends State<CabinSecurityScreen> {
   }
 
   // ── View-Only Detail Sheet ───────────────────────────────
-  // Doc: "Conducted trainings shown in the list are view-only;
-  //       the system prevents any modifications to reports
-  //       once they have been submitted."
   void _showViewOnlyDetail(TrainingItem item) {
+    final scoreColor = item.isPassed ? _Colors.pass : _Colors.fail;
+
     Get.bottomSheet(
       DraggableScrollableSheet(
-        initialChildSize: 0.85,
+        initialChildSize: 0.92,
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
         builder: (_, scrollCtrl) => Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFFF5F6FA),
             borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
           ),
           child: Column(
             children: [
-              // Drag handle
-              Padding(
-                padding: EdgeInsets.only(top: 12.h, bottom: 4.h),
-                child: Center(
-                  child: Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE4E7EF),
-                      borderRadius: BorderRadius.circular(2.r),
+              // ── Drag handle + top bar ─────────────────
+              Container(
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(top: 12.h, bottom: 8.h),
+                      child: Center(
+                        child: Container(
+                          width: 40.w,
+                          height: 4.h,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE4E7EF),
+                            borderRadius: BorderRadius.circular(2.r),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollCtrl,
-                  padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 32.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header row: View Only badge + PASS/FAIL badge
-                      Row(
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 10.h,
+                      ),
+                      child: Row(
                         children: [
                           Container(
                             padding: EdgeInsets.symmetric(
@@ -722,18 +857,14 @@ class _CabinSecurityScreenState extends State<CabinSecurityScreen> {
                           const Spacer(),
                           Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: 12.w,
-                              vertical: 4.h,
+                              horizontal: 14.w,
+                              vertical: 5.h,
                             ),
                             decoration: BoxDecoration(
-                              color: item.isPassed
-                                  ? _Colors.pass.withValues(alpha: 0.1)
-                                  : _Colors.fail.withValues(alpha: 0.1),
+                              color: scoreColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8.r),
                               border: Border.all(
-                                color: item.isPassed
-                                    ? _Colors.pass.withValues(alpha: 0.4)
-                                    : _Colors.fail.withValues(alpha: 0.4),
+                                color: scoreColor.withValues(alpha: 0.4),
                               ),
                             ),
                             child: Text(
@@ -741,189 +872,404 @@ class _CabinSecurityScreenState extends State<CabinSecurityScreen> {
                               style: GoogleFonts.poppins(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w700,
-                                color: item.isPassed
-                                    ? _Colors.pass
-                                    : _Colors.fail,
+                                color: scoreColor,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      SizedBox(height: 14.h),
+                    ),
+                  ],
+                ),
+              ),
 
-                      // Auditor name
-                      Text(
-                        item.observerName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 17.sp,
-                          fontWeight: FontWeight.w700,
-                          color: _Colors.namePrimary,
-                        ),
-                      ),
-                      if (item.role.isNotEmpty) ...[
-                        SizedBox(height: 2.h),
-                        Text(
-                          item.role,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12.sp,
-                            color: _Colors.textGrey,
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollCtrl,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Score Card ───────────────────────
+                      Container(
+                        margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+                        padding: EdgeInsets.all(16.w),
+                        decoration: BoxDecoration(
+                          color: scoreColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(
+                            color: scoreColor.withValues(alpha: 0.3),
                           ),
                         ),
-                      ],
-                      SizedBox(height: 10.h),
-
-                      // Date • Time
-                      _detailRow(
-                        Icons.access_time_rounded,
-                        '${item.date}  •  ${item.time}',
-                      ),
-                      SizedBox(height: 6.h),
-
-                      // Gate
-                      _detailRow(
-                        Icons.location_on_outlined,
-                        item.gate,
-                        bold: true,
-                      ),
-                      SizedBox(height: 6.h),
-
-                      // Ship #
-                      if (item.shipNumber.isNotEmpty) ...[
-                        _detailRow(
-                          Icons.flight_rounded,
-                          'Ship #${item.shipNumber}',
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 64.w,
+                              height: 64.h,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: scoreColor,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${item.scorePercent.toStringAsFixed(0)}%',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 14.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.isPassed
+                                        ? 'Search Passed'
+                                        : 'Search Failed',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: scoreColor,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    '${item.areaResults.length} areas inspected  •  ${item.failAreaCount} failed',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12.sp,
+                                      color: _Colors.textGrey,
+                                    ),
+                                  ),
+                                  if (!item.isPassed) ...[
+                                    SizedBox(height: 3.h),
+                                    Text(
+                                      'Any failed area = search FAIL',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 10.sp,
+                                        color: _Colors.fail,
+                                        fontWeight: FontWeight.w600,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 10.h),
-                      ],
-
-                      // Divider
-                      Divider(height: 1, color: const Color(0xFFEEEEEE)),
-                      SizedBox(height: 12.h),
-
-                      // Thumbnail images
-                      Row(
-                        children: [
-                          _buildLocationImage(item.locationImage),
-                          SizedBox(width: 8.w),
-                          _buildLocationImage(item.locationImage2),
-                        ],
                       ),
-                      SizedBox(height: 14.h),
 
-                      // Doc: Inspection Checklist results — area by area
-                      if (item.areaResults.isNotEmpty) ...[
-                        Text(
-                          'Inspection Checklist',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: _Colors.textDark,
-                          ),
+                      // ── Info Card ────────────────────────
+                      Container(
+                        margin: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 4.h,
                         ),
-                        SizedBox(height: 8.h),
-                        ...item.areaResults.map((r) {
-                          final isPassed = r['status'] == 'pass';
-                          return Padding(
-                            padding: EdgeInsets.only(bottom: 6.h),
-                            child: Row(
+                        padding: EdgeInsets.all(16.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16.r),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
                                 Container(
-                                  width: 8.w,
-                                  height: 8.h,
+                                  width: 4.w,
+                                  height: 22.h,
                                   decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: isPassed
-                                        ? _Colors.pass
-                                        : _Colors.fail,
+                                    color: _Colors.primary,
+                                    borderRadius: BorderRadius.circular(2.r),
                                   ),
                                 ),
                                 SizedBox(width: 10.w),
                                 Expanded(
                                   child: Text(
-                                    r['area'] ?? '',
+                                    item.observerName,
                                     style: GoogleFonts.poppins(
-                                      fontSize: 13.sp,
-                                      color: _Colors.textDark,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 2.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isPassed
-                                        ? _Colors.pass.withValues(alpha: 0.1)
-                                        : _Colors.fail.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(4.r),
-                                  ),
-                                  child: Text(
-                                    isPassed ? 'PASS' : 'FAIL',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 10.sp,
+                                      fontSize: 16.sp,
                                       fontWeight: FontWeight.w700,
-                                      color: isPassed
-                                          ? _Colors.pass
-                                          : _Colors.fail,
+                                      color: _Colors.namePrimary,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                          );
-                        }),
-                        SizedBox(height: 10.h),
-                        Divider(height: 1, color: const Color(0xFFEEEEEE)),
-                        SizedBox(height: 12.h),
+                            SizedBox(height: 14.h),
+                            _detailRow(
+                              Icons.access_time_rounded,
+                              '${item.date}  •  ${item.time}',
+                              isGrey: true,
+                            ),
+                            SizedBox(height: 8.h),
+                            if (item.role.isNotEmpty) ...[
+                              _detailRow(Icons.badge_outlined, item.role),
+                              SizedBox(height: 8.h),
+                            ],
+                            _detailRow(
+                              Icons.location_on_outlined,
+                              item.gate,
+                              bold: true,
+                            ),
+                            SizedBox(height: 8.h),
+                            if (item.shipNumber.isNotEmpty) ...[
+                              _detailRow(
+                                Icons.flight_rounded,
+                                'Ship #  ${item.shipNumber}',
+                              ),
+                              SizedBox(height: 8.h),
+                            ],
+                            if (item.aircraft.isNotEmpty) ...[
+                              _detailRow(
+                                Icons.airplanemode_active_rounded,
+                                item.aircraft,
+                              ),
+                              SizedBox(height: 8.h),
+                            ],
+                            if (item.supervisorName.isNotEmpty)
+                              _detailRow(
+                                Icons.person_outline_rounded,
+                                '${item.supervisorName}  •  ${item.supervisorRole}',
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      // ── Inspection Checklist Card ─────────
+                      if (item.areaResults.isNotEmpty) ...[
+                        Container(
+                          margin: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w,
+                                  vertical: 14.h,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 4.w,
+                                      height: 20.h,
+                                      decoration: BoxDecoration(
+                                        color: _Colors.primary,
+                                        borderRadius: BorderRadius.circular(
+                                          2.r,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Text(
+                                      'Inspection Checklist',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: _Colors.textDark,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    _miniChip(
+                                      '${item.passAreaCount} Pass',
+                                      _Colors.pass,
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    _miniChip(
+                                      '${item.failAreaCount} Fail',
+                                      _Colors.fail,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Divider(
+                                height: 1,
+                                color: const Color(0xFFEEEEEE),
+                              ),
+                              ...List.generate(item.areaResults.length, (
+                                index,
+                              ) {
+                                final area = item.areaResults[index];
+                                return Obx(() {
+                                  final isExpanded =
+                                      controller.expandedAreaIndex.value ==
+                                      index;
+                                  return _buildViewOnlyAreaTile(
+                                    area,
+                                    index,
+                                    isExpanded,
+                                  );
+                                });
+                              }),
+                              SizedBox(height: 4.h),
+                            ],
+                          ),
+                        ),
                       ],
 
-                      // Doc: Other Findings
-                      if (item.otherFindings.isNotEmpty) ...[
-                        Text(
-                          'Other Findings',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: _Colors.textDark,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          item.otherFindings,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13.sp,
-                            color: _Colors.textGrey,
-                            height: 1.5,
-                          ),
-                        ),
-                        SizedBox(height: 12.h),
-                      ],
-
-                      // Doc: Additional Notes
-                      if (item.additionalNotes.isNotEmpty) ...[
-                        Text(
-                          'Additional Notes',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: _Colors.textDark,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          item.additionalNotes,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13.sp,
-                            color: _Colors.textGrey,
-                            height: 1.5,
-                          ),
-                        ),
-                        SizedBox(height: 12.h),
-                      ],
-
-                      // View-only warning
+                      // ── Photos Card ──────────────────────
                       Container(
+                        margin: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 4.h,
+                        ),
+                        padding: EdgeInsets.all(16.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16.r),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 4.w,
+                                  height: 20.h,
+                                  decoration: BoxDecoration(
+                                    color: _Colors.primary,
+                                    borderRadius: BorderRadius.circular(2.r),
+                                  ),
+                                ),
+                                SizedBox(width: 10.w),
+                                Text(
+                                  'Photos',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: _Colors.textDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 12.h),
+                            Row(
+                              children: [
+                                _buildLocationImage(item.locationImage),
+                                SizedBox(width: 8.w),
+                                _buildLocationImage(item.locationImage2),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // ── Other Findings Card ──────────────
+                      if (item.otherFindings.isNotEmpty) ...[
+                        Container(
+                          margin: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 4.h,
+                          ),
+                          padding: EdgeInsets.all(16.w),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 4.w,
+                                    height: 20.h,
+                                    decoration: BoxDecoration(
+                                      color: _Colors.primary,
+                                      borderRadius: BorderRadius.circular(2.r),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Text(
+                                    'Other Findings',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: _Colors.textDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10.h),
+                              Text(
+                                item.otherFindings,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13.sp,
+                                  color: _Colors.textGrey,
+                                  height: 1.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      // ── Additional Notes Card ────────────
+                      if (item.additionalNotes.isNotEmpty) ...[
+                        Container(
+                          margin: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 4.h,
+                          ),
+                          padding: EdgeInsets.all(16.w),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 4.w,
+                                    height: 20.h,
+                                    decoration: BoxDecoration(
+                                      color: _Colors.primary,
+                                      borderRadius: BorderRadius.circular(2.r),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Text(
+                                    'Additional Notes',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: _Colors.textDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10.h),
+                              Text(
+                                item.additionalNotes,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13.sp,
+                                  color: _Colors.textGrey,
+                                  height: 1.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      // ── View-only warning ────────────────
+                      Container(
+                        margin: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 4.h,
+                        ),
                         padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF8E1),
@@ -955,27 +1301,29 @@ class _CabinSecurityScreenState extends State<CabinSecurityScreen> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 16.h),
 
-                      // Close button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50.h,
-                        child: ElevatedButton(
-                          onPressed: () => Get.back(),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _Colors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25.r),
+                      // ── Close button ─────────────────────
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 50.h,
+                          child: ElevatedButton(
+                            onPressed: () => Get.back(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _Colors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25.r),
+                              ),
+                              elevation: 0,
                             ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'Close',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w600,
+                            child: Text(
+                              'Close',
+                              style: GoogleFonts.poppins(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
@@ -992,7 +1340,264 @@ class _CabinSecurityScreenState extends State<CabinSecurityScreen> {
     );
   }
 
-  Widget _detailRow(IconData icon, String text, {bool bold = false}) {
+  Widget _buildViewOnlyAreaTile(
+    CabinSecurityAreaResult area,
+    int index,
+    bool isExpanded,
+  ) {
+    final areaPass = area.status == 'pass';
+    final areaColor = areaPass ? _Colors.pass : _Colors.fail;
+    return Column(
+      children: [
+        InkWell(
+          onTap: () => controller.toggleArea(index),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            child: Row(
+              children: [
+                Container(
+                  width: 38.w,
+                  height: 38.h,
+                  decoration: BoxDecoration(
+                    color: areaColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(
+                    _areaIcon(area.area),
+                    color: areaColor,
+                    size: 18.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        area.area,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: _Colors.textDark,
+                        ),
+                      ),
+                      if (area.subItems.isNotEmpty)
+                        Text(
+                          '${area.passCount} Pass  ${area.failCount} Fail  ${area.naCount} N/A',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.sp,
+                            color: _Colors.textGrey,
+                          ),
+                        ),
+                      SizedBox(height: 5.h),
+                      LayoutBuilder(
+                        builder: (_, constraints) {
+                          final pct = area.scorePercent / 100;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4.r),
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      height: 4.h,
+                                      width: constraints.maxWidth,
+                                      color: areaColor.withValues(alpha: 0.15),
+                                    ),
+                                    Container(
+                                      height: 4.h,
+                                      width: constraints.maxWidth * pct,
+                                      color: areaColor,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 3.h),
+                              Text(
+                                '${area.scorePercent.toStringAsFixed(0)}% score',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: areaColor,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: areaColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(
+                      color: areaColor.withValues(alpha: 0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    areaPass ? 'Pass' : 'Fail',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: areaColor,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                AnimatedRotation(
+                  turns: isExpanded ? 0.25 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: _Colors.textGrey,
+                    size: 20.sp,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (isExpanded) _buildExpandedItemsList(area),
+        Divider(height: 1, color: const Color(0xFFEEEEEE)),
+      ],
+    );
+  }
+
+  Widget _buildExpandedItemsList(CabinSecurityAreaResult area) {
+    if (area.subItems.isEmpty && area.pictures.isEmpty)
+      return const SizedBox.shrink();
+    return Container(
+      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: _Colors.background,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...area.subItems.map((item) {
+            Color itemColor = _Colors.textGrey;
+            IconData itemIcon = Icons.remove_circle_outline_rounded;
+            if (item.status == 'pass') {
+              itemColor = _Colors.pass;
+              itemIcon = Icons.check_circle_rounded;
+            } else if (item.status == 'fail') {
+              itemColor = _Colors.fail;
+              itemIcon = Icons.cancel_rounded;
+            }
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 5.h),
+              child: Row(
+                children: [
+                  Icon(itemIcon, color: itemColor, size: 16.sp),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Text(
+                      item.name,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.sp,
+                        color: _Colors.namePrimary,
+                      ),
+                    ),
+                  ),
+                  if (item.status.isNotEmpty)
+                    _miniChip(
+                      item.status.substring(0, 1).toUpperCase() +
+                          item.status.substring(1).toLowerCase(),
+                      itemColor,
+                    ),
+                ],
+              ),
+            );
+          }),
+          if (area.pictures.isNotEmpty) ...[
+            if (area.subItems.isNotEmpty) SizedBox(height: 12.h),
+            if (area.subItems.isNotEmpty) Divider(color: _Colors.divider),
+            if (area.subItems.isNotEmpty) SizedBox(height: 8.h),
+            Text(
+              'Attachments for ${area.area}',
+              style: GoogleFonts.poppins(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: _Colors.namePrimary,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            SizedBox(
+              height: 80.h,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: area.pictures.length,
+                itemBuilder: (context, i) {
+                  return Container(
+                    width: 80.w,
+                    margin: EdgeInsets.only(right: 8.w),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.r),
+                      image: DecorationImage(
+                        image: AssetImage(area.pictures[i]),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── Mini chip ─────────────────────────────────────────────
+  Widget _miniChip(String label, Color color) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6.r),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.poppins(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  // ── Icon per area name ───────────────────────────────────
+  IconData _areaIcon(String area) {
+    final a = area.toLowerCase();
+    if (a.contains('galley')) return Icons.restaurant_rounded;
+    if (a.contains('lav')) return Icons.wc_rounded;
+    if (a.contains('first class') || a.contains('business'))
+      return Icons.airline_seat_recline_extra_rounded;
+    if (a.contains('comfort')) return Icons.airline_seat_recline_normal_rounded;
+    if (a.contains('cabin') || a.contains('main')) return Icons.weekend_rounded;
+    if (a.contains('overhead')) return Icons.inventory_2_outlined;
+    if (a.contains('pocket')) return Icons.book_outlined;
+    if (a.contains('crew')) return Icons.people_outline_rounded;
+    if (a.contains('emergency')) return Icons.health_and_safety_outlined;
+    return Icons.event_seat_rounded;
+  }
+
+  Widget _detailRow(
+    IconData icon,
+    String text, {
+    bool bold = false,
+    bool isGrey = false,
+  }) {
     return Row(
       children: [
         Icon(icon, size: 14.sp, color: _Colors.textGrey),
