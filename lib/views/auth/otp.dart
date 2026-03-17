@@ -1,4 +1,8 @@
 import 'dart:async';
+
+import 'package:avislap/controllers/login_controller.dart';
+import 'package:avislap/services/api_client.dart';
+import 'package:avislap/views/auth/ResetPassword.dart';
 import 'package:avislap/widgets/parallax_hero_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,27 +14,28 @@ class _C {
   static const Color blue = Color(0xFF3D5AFE);
   static const Color ink = Color(0xFF0E0E10);
   static const Color border = Color(0xFFEAECF2);
-  static const Color placeholder = Color(0xFFC8CDD9);
 }
 
 class OtpVerificationScreen extends StatefulWidget {
-  const OtpVerificationScreen({super.key});
+  const OtpVerificationScreen({required this.email, super.key});
+
+  final String email;
 
   @override
   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-
-  // ── OTP fields ───────────────────────────────────────────
+  final AuthController _authController = AuthController.ensureRegistered();
   final int _otpLength = 5;
+
   late List<TextEditingController> _controllers;
   late List<FocusNode> _focusNodes;
 
-  // ── Resend timer ─────────────────────────────────────────
   Timer? _timer;
-  int _secondsLeft = 0; // 0 = show "Resend OTP", >0 = show "wait for X.XX sec"
+  int _secondsLeft = 0;
   bool _canResend = true;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -39,47 +44,48 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     _controllers = List.generate(_otpLength, (_) => TextEditingController());
     _focusNodes = List.generate(_otpLength, (_) => FocusNode());
 
-    // Focus first box
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNodes[0].requestFocus();
     });
   }
 
-  // ── Resend timer logic ───────────────────────────────────
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    for (final focusNode in _focusNodes) {
+      focusNode.dispose();
+    }
+    _timer?.cancel();
+    super.dispose();
+  }
+
   void _startResendTimer() {
     setState(() {
-      _secondsLeft = 60; // 60 seconds countdown
+      _secondsLeft = 60;
       _canResend = false;
     });
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (t) {
-      if (!mounted) { t.cancel(); return; }
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
       setState(() {
         _secondsLeft -= 1;
         if (_secondsLeft <= 0) {
           _secondsLeft = 0;
           _canResend = true;
-          t.cancel();
+          timer.cancel();
         }
       });
     });
   }
 
-  String get _timerText {
-    final secs = (_secondsLeft / 10).floor();
-    final tenths = _secondsLeft % 10;
-    return 'wait for $secs.$tenths sec';
-  }
+  String get _timerText => 'Resend in $_secondsLeft sec';
 
-  @override
-  void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  // ── OTP input handler ────────────────────────────────────
   void _onOtpChanged(String value, int index) {
     if (value.length == 1) {
       if (index < _otpLength - 1) {
@@ -87,6 +93,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       } else {
         _focusNodes[index].unfocus();
       }
+      return;
+    }
+
+    if (value.isEmpty && index > 0) {
+      _focusNodes[index - 1].requestFocus();
     }
   }
 
@@ -100,13 +111,60 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
+  Future<void> _handleContinue() async {
+    final code = _controllers.map((controller) => controller.text).join();
+    if (code.length != _otpLength) {
+      _showMessage('Enter the 5-digit verification code.', isError: true);
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await _authController.verifyPasswordResetCode(code);
+      if (!mounted) {
+        return;
+      }
+      Get.off(() => ResetPasswordScreen(email: widget.email));
+    } on ApiException catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage('Unable to verify the code.', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  Future<void> _handleResend() async {
+    try {
+      await _authController.resendPasswordResetCode();
+      _startResendTimer();
+      _showMessage('A new verification code has been sent.', isError: false);
+    } on ApiException catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage('Unable to resend the code.', isError: true);
+    }
+  }
+
+  void _showMessage(String message, {required bool isError}) {
+    Get.snackbar(
+      isError ? 'Verification Failed' : 'Check Your Email',
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: isError ? const Color(0xFFD92D20) : _C.blue,
+      colorText: Colors.white,
+      margin: EdgeInsets.all(16.w),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FF),
       body: Column(
         children: [
-          // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
             bottomPadding: 44,
             child: Text(
@@ -141,9 +199,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Subtitle
                       Text(
-                        'Enter the otp sent to your email address\nto reset your old password',
+                        'Enter the 5-digit code sent to\n${widget.email}',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.dmSans(
                           fontSize: 13.sp,
@@ -152,39 +209,31 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         ),
                       ),
                       SizedBox(height: 24.h),
-
-                      // OTP boxes
                       _buildOtpRow(),
                       SizedBox(height: 28.h),
-
-                      // Continue button
                       _buildContinueButton(),
                       SizedBox(height: 16.h),
-
-                      // Resend / Timer
                       _canResend
                           ? GestureDetector(
-                        onTap: _startResendTimer,
-                        child: Text(
-                          'Resend OTP',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 14.sp,
-                            color: _C.blue,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      )
+                              onTap: _handleResend,
+                              child: Text(
+                                'Resend Code',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 14.sp,
+                                  color: _C.blue,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            )
                           : Text(
-                        _timerText,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 14.sp,
-                          color: _C.blue,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                              _timerText,
+                              style: GoogleFonts.dmSans(
+                                fontSize: 14.sp,
+                                color: _C.blue,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                       SizedBox(height: 12.h),
-
-                      // Back to Sign In
                       GestureDetector(
                         onTap: () => Get.back(),
                         child: Text(
@@ -208,18 +257,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     );
   }
 
-  // ── OTP Row ───────────────────────────────────────────────
   Widget _buildOtpRow() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(_otpLength, (i) => _buildOtpBox(i)),
+      children: List.generate(_otpLength, _buildOtpBox),
     );
   }
 
   Widget _buildOtpBox(int index) {
     return KeyboardListener(
       focusNode: FocusNode(),
-      onKeyEvent: (e) => _onKeyEvent(e, index),
+      onKeyEvent: (event) => _onKeyEvent(event, index),
       child: SizedBox(
         width: 52.w,
         height: 58.h,
@@ -235,7 +283,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             fontWeight: FontWeight.w600,
             color: _C.ink,
           ),
-          onChanged: (v) => _onOtpChanged(v, index),
+          onChanged: (value) => _onOtpChanged(value, index),
           decoration: InputDecoration(
             counterText: '',
             contentPadding: EdgeInsets.zero,
@@ -253,14 +301,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     );
   }
 
-  // ── Continue Button ───────────────────────────────────────
   Widget _buildContinueButton() {
     return GestureDetector(
-      onTap: () {
-        // final otp = _controllers.map((c) => c.text).join();
-        // handle OTP verification
-        // Get.to(() => NextScreen());
-      },
+      onTap: _isSubmitting ? null : _handleContinue,
       child: Container(
         height: 54.h,
         width: double.infinity,
@@ -269,15 +312,24 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           borderRadius: BorderRadius.circular(30.r),
         ),
         alignment: Alignment.center,
-        child: Text(
-          'CONTINUE',
-          style: GoogleFonts.dmSans(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: 1.2,
-          ),
-        ),
+        child: _isSubmitting
+            ? SizedBox(
+                width: 20.w,
+                height: 20.w,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                'CONTINUE',
+                style: GoogleFonts.dmSans(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: 1.2,
+                ),
+              ),
       ),
     );
   }

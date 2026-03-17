@@ -9,9 +9,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class _C {
-  static const Color blue  = Color(0xFF3D5AFE);
-  static const Color ink   = Color(0xFF0E0E10);
-  static const Color white = Color(0xFFFFFFFF);
+  static const Color blue = Color(0xFF3D5AFE);
+  static const Color ink = Color(0xFF0E0E10);
 }
 
 class TroubleScreen extends StatefulWidget {
@@ -22,7 +21,7 @@ class TroubleScreen extends StatefulWidget {
 }
 
 class _TroubleScreenState extends State<TroubleScreen> {
-  final controller = Get.put(AuthController());
+  final controller = AuthController.ensureRegistered();
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +34,9 @@ class _TroubleScreenState extends State<TroubleScreen> {
               children: [
                 // ── Blue hero — takes top portion ──────────
                 Positioned(
-                  top: 0, left: 0, right: 0,
+                  top: 0,
+                  left: 0,
+                  right: 0,
                   child: IgnorePointer(
                     ignoring: true,
                     child: ParallaxHeroWidget(
@@ -56,32 +57,29 @@ class _TroubleScreenState extends State<TroubleScreen> {
 
                 // ── White card overlaps hero from bottom ───
                 Positioned(
-                  top: 235.h,   // ← overlap point: sits over blue
-                  left: 0, right: 0, bottom: 0,
+                  top: 235.h, // ← overlap point: sits over blue
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
                         Container(
-                          margin: EdgeInsets.symmetric(
-                              horizontal: 16.w),
-                          padding: EdgeInsets.fromLTRB(
-                              24.w, 28.h, 24.w, 28.h),
+                          margin: EdgeInsets.symmetric(horizontal: 16.w),
+                          padding: EdgeInsets.fromLTRB(24.w, 28.h, 24.w, 28.h),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius:
-                            BorderRadius.circular(28.r),
+                            borderRadius: BorderRadius.circular(28.r),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black
-                                    .withValues(alpha: 0.08),
+                                color: Colors.black.withValues(alpha: 0.08),
                                 blurRadius: 24,
                                 offset: const Offset(0, 8),
                               ),
                             ],
                           ),
                           child: Column(
-                            crossAxisAlignment:
-                            CrossAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 'Please Select your issue',
@@ -115,8 +113,7 @@ class _TroubleScreenState extends State<TroubleScreen> {
                                   style: GoogleFonts.dmSans(
                                     fontSize: 14.sp,
                                     color: _C.blue,
-                                    fontWeight:
-                                    FontWeight.w600,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
@@ -163,23 +160,21 @@ class _TroubleScreenState extends State<TroubleScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: selected
-                          ? _C.blue
-                          : Colors.grey.shade400,
+                      color: selected ? _C.blue : Colors.grey.shade400,
                       width: selected ? 2 : 1.5,
                     ),
                   ),
                   child: selected
                       ? Center(
-                    child: Container(
-                      width: 10.w,
-                      height: 10.h,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _C.blue,
-                      ),
-                    ),
-                  )
+                          child: Container(
+                            width: 10.w,
+                            height: 10.h,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _C.blue,
+                            ),
+                          ),
+                        )
                       : null,
                 ),
                 SizedBox(width: 12.w),
@@ -188,9 +183,7 @@ class _TroubleScreenState extends State<TroubleScreen> {
                     title,
                     style: GoogleFonts.dmSans(
                       fontSize: 14.sp,
-                      fontWeight: selected
-                          ? FontWeight.w600
-                          : FontWeight.w400,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                       color: selected
                           ? Colors.grey.shade900
                           : Colors.grey.shade700,
@@ -216,6 +209,15 @@ class _TroubleScreenState extends State<TroubleScreen> {
           Get.to(() => const ForgotPasswordScreen());
         } else if (issue == 'email_issue') {
           Get.to(() => const NoEmailAccessScreen());
+        } else {
+          Get.snackbar(
+            'Trouble Signing In',
+            'Please select an issue first.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: _C.blue,
+            colorText: Colors.white,
+            margin: EdgeInsets.all(16.w),
+          );
         }
       },
       child: Container(

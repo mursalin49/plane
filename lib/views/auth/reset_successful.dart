@@ -1,3 +1,4 @@
+import 'package:avislap/healper/route.dart';
 import 'package:avislap/widgets/parallax_hero_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -18,8 +19,6 @@ class ResetSuccessScreen extends StatefulWidget {
 
 class _ResetSuccessScreenState extends State<ResetSuccessScreen>
     with SingleTickerProviderStateMixin {
-
-  // ✅ Check icon animation
   late AnimationController _checkCtrl;
   late Animation<double> _checkScale;
   late Animation<double> _checkOpacity;
@@ -28,19 +27,25 @@ class _ResetSuccessScreenState extends State<ResetSuccessScreen>
   void initState() {
     super.initState();
 
-    // ✅ Check icon bounce-in animation
     _checkCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 700));
-    _checkScale = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _checkCtrl, curve: Curves.elasticOut));
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _checkScale = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _checkCtrl, curve: Curves.elasticOut));
     _checkOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-            parent: _checkCtrl,
-            curve: const Interval(0.0, 0.4, curve: Curves.easeIn)));
+      CurvedAnimation(
+        parent: _checkCtrl,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeIn),
+      ),
+    );
 
-    // Start check after short delay
     Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) _checkCtrl.forward();
+      if (mounted) {
+        _checkCtrl.forward();
+      }
     });
   }
 
@@ -56,11 +61,10 @@ class _ResetSuccessScreenState extends State<ResetSuccessScreen>
       backgroundColor: const Color(0xFFF0F4FF),
       body: Column(
         children: [
-          // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
             bottomPadding: 220,
             child: Text(
-              'Reset ID',
+              'Reset Password',
               style: GoogleFonts.dmSans(
                 fontSize: 32.sp,
                 fontWeight: FontWeight.w700,
@@ -69,8 +73,6 @@ class _ResetSuccessScreenState extends State<ResetSuccessScreen>
               ),
             ),
           ),
-
-          // ── White Card ────────────────────────────────
           Expanded(
             child: Transform.translate(
               offset: const Offset(0, -180),
@@ -91,10 +93,9 @@ class _ResetSuccessScreenState extends State<ResetSuccessScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // ✅ Animated check icon
                     AnimatedBuilder(
                       animation: _checkCtrl,
-                      builder: (_, __) => Opacity(
+                      builder: (context, child) => Opacity(
                         opacity: _checkOpacity.value,
                         child: Transform.scale(
                           scale: _checkScale.value,
@@ -103,8 +104,7 @@ class _ResetSuccessScreenState extends State<ResetSuccessScreen>
                             height: 72.h,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border:
-                              Border.all(color: _C.blue, width: 2.5),
+                              border: Border.all(color: _C.blue, width: 2.5),
                             ),
                             child: Icon(
                               Icons.check_rounded,
@@ -116,10 +116,8 @@ class _ResetSuccessScreenState extends State<ResetSuccessScreen>
                       ),
                     ),
                     SizedBox(height: 24.h),
-
-                    // Title
                     Text(
-                      'ID Reset\nSuccessful',
+                      'Password Reset\nSuccessful',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.dmSans(
                         fontSize: 24.sp,
@@ -130,10 +128,8 @@ class _ResetSuccessScreenState extends State<ResetSuccessScreen>
                       ),
                     ),
                     SizedBox(height: 12.h),
-
-                    // Subtitle
                     Text(
-                      'You can now login with your\nNew ID',
+                      'You can now sign in with your\nnew password.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.dmSans(
                         fontSize: 13.sp,
@@ -142,13 +138,8 @@ class _ResetSuccessScreenState extends State<ResetSuccessScreen>
                       ),
                     ),
                     SizedBox(height: 32.h),
-
-                    // GO TO SIGN IN button
                     GestureDetector(
-                      onTap: () {
-                        // Navigate back to login, clearing stack
-                        Get.offAllNamed('/login');
-                      },
+                      onTap: () => Get.offAllNamed(RouteHelper.login),
                       child: Container(
                         height: 54.h,
                         width: double.infinity,
@@ -173,7 +164,6 @@ class _ResetSuccessScreenState extends State<ResetSuccessScreen>
               ),
             ),
           ),
-
           _buildHomeIndicator(),
         ],
       ),

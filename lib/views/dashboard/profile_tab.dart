@@ -1,4 +1,7 @@
+import 'package:avislap/controllers/login_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
 import '../../utils/app_colors.dart';
 import '../../utils/app_text.dart';
 
@@ -7,48 +10,75 @@ class ProfileTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const name = "Employee";
-    const supervisorName = "John Smith";
+    final authController = AuthController.ensureRegistered();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          const SizedBox(height: 24),
-          CircleAvatar(
-            radius: 48,
-            backgroundColor: AppColors.mainAppColor.withOpacity(0.2),
-            child: AppText(
-              name.isNotEmpty ? name[0].toUpperCase() : "?",
-              color: AppColors.mainAppColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 36,
+    return Obx(() {
+      final user = authController.currentUser.value;
+      final station = authController.activeStation.value;
+      final name = user?.fullName.isNotEmpty == true
+          ? user!.fullName
+          : 'Employee';
+      final roleText = station == null
+          ? 'No active station selected'
+          : '${station.roleName} • ${station.stationCode}';
+
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const SizedBox(height: 24),
+            CircleAvatar(
+              radius: 48,
+              backgroundColor: AppColors.mainAppColor.withValues(alpha: 0.2),
+              child: AppText(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                color: AppColors.mainAppColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 36,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          AppText(name, fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.dark),
-          const SizedBox(height: 4),
-          AppText("Supervisor: $supervisorName", fontSize: 14, color: AppColors.from_heading),
-          const SizedBox(height: 32),
-          _SettingsTile(icon: Icons.notifications_outlined, title: "Notifications", onTap: () {}),
-          _SettingsTile(icon: Icons.info_outline, title: "About", onTap: () {}),
-          _SettingsTile(icon: Icons.logout, title: "Log out", onTap: () {}),
-        ],
-      ),
-    );
+            const SizedBox(height: 16),
+            AppText(
+              name,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColors.dark,
+            ),
+            const SizedBox(height: 4),
+            AppText(roleText, fontSize: 14, color: AppColors.from_heading),
+            const SizedBox(height: 32),
+            _SettingsTile(
+              icon: Icons.notifications_outlined,
+              title: 'Notifications',
+              onTap: () {},
+            ),
+            _SettingsTile(
+              icon: Icons.info_outline,
+              title: 'About',
+              onTap: () {},
+            ),
+            _SettingsTile(
+              icon: Icons.logout,
+              title: 'Log out',
+              onTap: () => authController.logout(),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
 class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-
   const _SettingsTile({
     required this.icon,
     required this.title,
     required this.onTap,
   });
+
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {

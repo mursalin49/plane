@@ -1,3 +1,4 @@
+import 'package:avislap/controllers/login_controller.dart';
 import 'package:avislap/widgets/parallax_hero_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,13 +18,31 @@ class NoEmailAccessScreen extends StatefulWidget {
 }
 
 class _NoEmailAccessScreenState extends State<NoEmailAccessScreen> {
+  final AuthController _authController = AuthController.ensureRegistered();
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMessage();
+  }
+
+  Future<void> _loadMessage() async {
+    try {
+      await _authController.loadNoEmailAccessMessage();
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FF),
       body: Column(
         children: [
-          // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
             bottomPadding: 220,
             child: Text(
@@ -37,8 +56,6 @@ class _NoEmailAccessScreenState extends State<NoEmailAccessScreen> {
               ),
             ),
           ),
-
-          // ── White Card ────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               child: Transform.translate(
@@ -60,20 +77,29 @@ class _NoEmailAccessScreenState extends State<NoEmailAccessScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Help message
-                      Text(
-                        "Please contact your management...!!",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 14.sp,
-                          color: Colors.grey.shade600,
-                          height: 1.5,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
+                      _isLoading
+                          ? SizedBox(
+                              width: 26.w,
+                              height: 26.w,
+                              child: const CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                              ),
+                            )
+                          : Obx(
+                              () => Text(
+                                _authController
+                                    .noEmailAccessSupportMessage
+                                    .value,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 14.sp,
+                                  color: Colors.grey.shade600,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
                       SizedBox(height: 24.h),
-
-                      // Back to Sign In button
                       GestureDetector(
                         onTap: () => Get.back(),
                         child: Text(
@@ -91,8 +117,6 @@ class _NoEmailAccessScreenState extends State<NoEmailAccessScreen> {
               ),
             ),
           ),
-
-          // Home indicator
           _buildHomeIndicator(),
         ],
       ),

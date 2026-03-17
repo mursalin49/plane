@@ -1,4 +1,4 @@
-import 'package:avislap/views/auth/ResetPassword.dart';
+import 'package:avislap/healper/route.dart';
 import 'package:avislap/widgets/parallax_hero_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,16 +11,16 @@ class _C {
 }
 
 class OtpIdSuccessScreen extends StatefulWidget {
-  const OtpIdSuccessScreen({super.key});
+  const OtpIdSuccessScreen({required this.recoveredUserId, super.key});
+
+  final String recoveredUserId;
 
   @override
-  State<OtpIdSuccessScreen> createState() => _OtpSuccessScreenState();
+  State<OtpIdSuccessScreen> createState() => _OtpIdSuccessScreenState();
 }
 
-class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
+class _OtpIdSuccessScreenState extends State<OtpIdSuccessScreen>
     with SingleTickerProviderStateMixin {
-
-  // ✅ Check icon animation
   late AnimationController _checkCtrl;
   late Animation<double> _checkScale;
   late Animation<double> _checkOpacity;
@@ -29,19 +29,25 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
   void initState() {
     super.initState();
 
-    // ✅ Check icon bounce-in animation
     _checkCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 700));
-    _checkScale = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _checkCtrl, curve: Curves.elasticOut));
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _checkScale = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _checkCtrl, curve: Curves.elasticOut));
     _checkOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-            parent: _checkCtrl,
-            curve: const Interval(0.0, 0.4, curve: Curves.easeIn)));
+      CurvedAnimation(
+        parent: _checkCtrl,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeIn),
+      ),
+    );
 
-    // Start check after short delay
     Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) _checkCtrl.forward();
+      if (mounted) {
+        _checkCtrl.forward();
+      }
     });
   }
 
@@ -57,11 +63,10 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
       backgroundColor: const Color(0xFFF0F4FF),
       body: Column(
         children: [
-          // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
             bottomPadding: 230,
             child: Text(
-              'OTP Verification',
+              'Recover User ID',
               style: GoogleFonts.dmSans(
                 fontSize: 32.sp,
                 fontWeight: FontWeight.w700,
@@ -70,8 +75,6 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
               ),
             ),
           ),
-
-          // ── White Card ────────────────────────────────
           Expanded(
             child: Transform.translate(
               offset: const Offset(0, -150),
@@ -92,10 +95,9 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // ✅ Animated check icon
                     AnimatedBuilder(
                       animation: _checkCtrl,
-                      builder: (_, __) => Opacity(
+                      builder: (context, child) => Opacity(
                         opacity: _checkOpacity.value,
                         child: Transform.scale(
                           scale: _checkScale.value,
@@ -104,8 +106,7 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
                             height: 72.h,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border:
-                              Border.all(color: _C.blue, width: 2.5),
+                              border: Border.all(color: _C.blue, width: 2.5),
                             ),
                             child: Icon(
                               Icons.check_rounded,
@@ -117,10 +118,8 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
                       ),
                     ),
                     SizedBox(height: 24.h),
-
-                    // Title
                     Text(
-                      'OTP Verification\nSuccessful',
+                      'User ID Recovered',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.dmSans(
                         fontSize: 24.sp,
@@ -131,10 +130,8 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
                       ),
                     ),
                     SizedBox(height: 12.h),
-
-                    // Subtitle
                     Text(
-                      'You can now reset your password',
+                      'Your User ID is',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.dmSans(
                         fontSize: 13.sp,
@@ -142,15 +139,31 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
                         height: 1.5,
                       ),
                     ),
+                    SizedBox(height: 10.h),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F8FC),
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(
+                          color: _C.blue.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Text(
+                        widget.recoveredUserId,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.w700,
+                          color: _C.blue,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
                     SizedBox(height: 32.h),
-
-                    // GO TO PASSWORD RESET button
                     GestureDetector(
-                      onTap: () {
-                        // Navigate back to login, clearing stack
-                        // Get.offAllNamed('/login');
-                        Get.to(() => ResetId());
-                      },
+                      onTap: () => Get.offAllNamed(RouteHelper.login),
                       child: Container(
                         height: 54.h,
                         width: double.infinity,
@@ -160,7 +173,7 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          'GO TO PASSWORD RESET',
+                          'GO TO SIGN IN',
                           style: GoogleFonts.dmSans(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w700,
@@ -175,7 +188,6 @@ class _OtpSuccessScreenState extends State<OtpIdSuccessScreen>
               ),
             ),
           ),
-
           _buildHomeIndicator(),
         ],
       ),

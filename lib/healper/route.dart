@@ -1,13 +1,10 @@
 import 'package:avislap/views/auth/splash_screen.dart';
 import 'package:avislap/views/auth/login_screen.dart';
-import 'package:avislap/views/forms/LAV%20Safety%20Observation/LAVSafety.dart';
 import 'package:avislap/views/forms/LAV%20Safety%20Observation/LavSafetyObservationScreen.dart';
 import 'package:get/get.dart';
 
-import '../views/auth/FlightAnimation.dart';
 import '../views/dashboard/dashboard_screen.dart';
 import '../views/forms/Cabin Quality Audit/CabinAudit.dart';
-import '../views/forms/cabin security search/CabinSecurityTrainingScreen.dart';
 import '../views/forms/cabin security search/cabin_secuirity.dart';
 
 class RouteHelper {
@@ -22,8 +19,7 @@ class RouteHelper {
   static List<GetPage> routes = [
     GetPage(
       name: splash,
-      // page: () => FlightAnimation(),
-      page: () => SplashScreen(),
+      page: () => const SplashScreen(),
       transition: Transition.fadeIn,
     ),
     GetPage(

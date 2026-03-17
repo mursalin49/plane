@@ -1,3 +1,5 @@
+import 'package:avislap/controllers/login_controller.dart';
+import 'package:avislap/services/api_client.dart';
 import 'package:avislap/views/auth/reset_successful.dart';
 import 'package:avislap/widgets/parallax_hero_widget.dart';
 import 'package:flutter/material.dart';
@@ -13,18 +15,23 @@ class _C {
   static const Color muted = Color(0xFF8891A4);
 }
 
-class ResetId extends StatefulWidget {
-  const ResetId ({super.key});
+class ResetPasswordScreen extends StatefulWidget {
+  const ResetPasswordScreen({required this.email, super.key});
+
+  final String email;
 
   @override
-  State<ResetId > createState() => _ResetPasswordScreenState();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _ResetPasswordScreenState extends State<ResetId > {
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  final AuthController _authController = AuthController.ensureRegistered();
   final _newPasswordCtrl = TextEditingController();
   final _confirmPasswordCtrl = TextEditingController();
+
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -33,17 +40,61 @@ class _ResetPasswordScreenState extends State<ResetId > {
     super.dispose();
   }
 
+  Future<void> _submit() async {
+    final newPassword = _newPasswordCtrl.text;
+    final confirmPassword = _confirmPasswordCtrl.text;
+
+    if (newPassword.length < 8 || newPassword.length > 20) {
+      _showMessage('Password must be between 8 and 20 characters.');
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      _showMessage('Passwords do not match.');
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() => _isSubmitting = true);
+
+    try {
+      await _authController.submitNewPassword(newPassword);
+      if (!mounted) {
+        return;
+      }
+      Get.offAll(() => const ResetSuccessScreen());
+    } on ApiException catch (error) {
+      _showMessage(error.message);
+    } catch (_) {
+      _showMessage('Unable to reset the password.');
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    Get.snackbar(
+      'Reset Password',
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const Color(0xFFD92D20),
+      colorText: Colors.white,
+      margin: EdgeInsets.all(16.w),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FF),
       body: Column(
         children: [
-          // ── Blue Hero ──────────────────────────────────
           ParallaxHeroWidget(
             bottomPadding: 220,
             child: Text(
-              'Reset ID',
+              'Reset Password',
               style: GoogleFonts.dmSans(
                 fontSize: 32.sp,
                 fontWeight: FontWeight.w700,
@@ -52,8 +103,6 @@ class _ResetPasswordScreenState extends State<ResetId > {
               ),
             ),
           ),
-
-          // ── White Card ────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               child: Transform.translate(
@@ -75,9 +124,8 @@ class _ResetPasswordScreenState extends State<ResetId > {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Subtitle
                       Text(
-                        'Enter new password & confirm the\npassword to set a new password',
+                        'Enter a new password for\n${widget.email}',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.dmSans(
                           fontSize: 13.sp,
@@ -86,34 +134,30 @@ class _ResetPasswordScreenState extends State<ResetId > {
                         ),
                       ),
                       SizedBox(height: 20.h),
-
-                      // New Password
                       _buildField(
                         label: 'New Password',
                         child: _buildInput(
                           controller: _newPasswordCtrl,
                           hint: 'Enter new password',
                           obscure: _obscureNew,
-                          onToggle: () =>
-                              setState(() => _obscureNew = !_obscureNew),
+                          onToggle: () {
+                            setState(() => _obscureNew = !_obscureNew);
+                          },
                         ),
                       ),
                       SizedBox(height: 16.h),
-
-                      // Confirm Password
                       _buildField(
                         label: 'Confirm Password',
                         child: _buildInput(
                           controller: _confirmPasswordCtrl,
                           hint: 'Confirm password',
                           obscure: _obscureConfirm,
-                          onToggle: () => setState(
-                                  () => _obscureConfirm = !_obscureConfirm),
+                          onToggle: () {
+                            setState(() => _obscureConfirm = !_obscureConfirm);
+                          },
                         ),
                       ),
                       SizedBox(height: 28.h),
-
-                      // Submit button
                       _buildSubmitButton(),
                     ],
                   ),
@@ -121,14 +165,12 @@ class _ResetPasswordScreenState extends State<ResetId > {
               ),
             ),
           ),
-
           _buildHomeIndicator(),
         ],
       ),
     );
   }
 
-  // ── Field + Label ─────────────────────────────────────────
   Widget _buildField({required String label, required Widget child}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,14 +229,9 @@ class _ResetPasswordScreenState extends State<ResetId > {
     );
   }
 
-  // ── Submit Button ─────────────────────────────────────────
   Widget _buildSubmitButton() {
     return GestureDetector(
-      onTap: () {
-        // submit logic
-        // Get.back();
-        Get.to(()=> ResetSuccessScreen());
-      },
+      onTap: _isSubmitting ? null : _submit,
       child: Container(
         height: 54.h,
         width: double.infinity,
@@ -203,15 +240,24 @@ class _ResetPasswordScreenState extends State<ResetId > {
           borderRadius: BorderRadius.circular(30.r),
         ),
         alignment: Alignment.center,
-        child: Text(
-          'SUBMIT',
-          style: GoogleFonts.dmSans(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: 1.2,
-          ),
-        ),
+        child: _isSubmitting
+            ? SizedBox(
+                width: 20.w,
+                height: 20.w,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                'SUBMIT',
+                style: GoogleFonts.dmSans(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: 1.2,
+                ),
+              ),
       ),
     );
   }
